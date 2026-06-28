@@ -1,0 +1,28 @@
+[Unit]
+Description=PBS Prometheus Exporter
+Documentation=https://prometheus.io/docs/instrumenting/writing_exporters/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=prom-exporter
+Group=prom-exporter
+EnvironmentFile=-/etc/pbs.conf
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/pbs/bin
+Environment=HOME=/var/lib/pbs-exporter
+Environment=LOGNAME=prom-exporter
+Environment=USER=prom-exporter
+ExecStart=/usr/local/bin/pbs-exporter --config.file=/etc/pbs-exporter/config.yml --web.config.file=/etc/pbs-exporter/web-config.yml
+Restart=on-failure
+RestartSec=5s
+StateDirectory=pbs-exporter
+WorkingDirectory=/var/lib/pbs-exporter
+
+# Keep the runtime environment close to an interactive PBS client session.
+# PBS client auth depends on pbs_iff plus settings from /etc/pbs.conf, and it
+# is sensitive to service sandboxing that diverges from a normal shell.
+
+
+[Install]
+WantedBy=multi-user.target
