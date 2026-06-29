@@ -1,6 +1,7 @@
 package exporter
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -104,6 +105,62 @@ func TestCollectorEmitsPBSMetricsFromSnapshot(t *testing.T) {
 	assertMetricValue(t, metricFamilies, "pbs_queue_jobs", map[string]string{"queue": "workq", "state": "total"}, 6)
 	assertMetricValue(t, metricFamilies, "pbs_server_scheduling_enabled", nil, 1)
 	assertMetricValue(t, metricFamilies, "pbs_server_version_info", map[string]string{"version": "2026.1.0"}, 1)
+}
+
+func TestCollectorEmitsQueueWaitMetricsFromSnapshot(t *testing.T) {
+	registry := prometheus.NewRegistry()
+	store := NewStore()
+	now := time.Unix(1700000000, 0).UTC()
+
+	store.UpdateSuccess(&pbs.Snapshot{
+		CollectedAt: now,
+		Queues: &pbs.QueueData{
+			Queues: map[string]pbs.QueueInfo{
+				"workq":  {},
+				"emptyq": {},
+			},
+		},
+		QueueWaits: &pbs.QueueWaitData{
+			Queues: map[string]pbs.QueueWaitInfo{
+				"workq": {
+					Buckets: map[float64]int{
+						300:         1,
+						1800:        1,
+						3600:        2,
+						7200:        2,
+						21600:       2,
+						43200:       2,
+						86400:       2,
+						172800:      2,
+						432000:      2,
+						math.Inf(1): 2,
+					},
+					Count:  2,
+					Sum:    3900,
+					Oldest: 3600,
+				},
+			},
+		},
+	}, now, 150*time.Millisecond)
+
+	registry.MustRegister(NewCollector(store, Options{}))
+
+	metricFamilies, err := registry.Gather()
+	if err != nil {
+		t.Fatalf("Gather returned error: %v", err)
+	}
+
+	assertMetricValue(t, metricFamilies, "pbs_queue_job_wait_seconds_bucket", map[string]string{"queue": "workq", "le": "300"}, 1)
+	assertMetricValue(t, metricFamilies, "pbs_queue_job_wait_seconds_bucket", map[string]string{"queue": "workq", "le": "3600"}, 2)
+	assertMetricValue(t, metricFamilies, "pbs_queue_job_wait_seconds_bucket", map[string]string{"queue": "workq", "le": "+Inf"}, 2)
+	assertMetricValue(t, metricFamilies, "pbs_queue_job_wait_seconds_count", map[string]string{"queue": "workq"}, 2)
+	assertMetricValue(t, metricFamilies, "pbs_queue_job_wait_seconds_sum", map[string]string{"queue": "workq"}, 3900)
+	assertMetricValue(t, metricFamilies, "pbs_queue_oldest_job_wait_seconds", map[string]string{"queue": "workq"}, 3600)
+
+	assertMetricValue(t, metricFamilies, "pbs_queue_job_wait_seconds_bucket", map[string]string{"queue": "emptyq", "le": "300"}, 0)
+	assertMetricValue(t, metricFamilies, "pbs_queue_job_wait_seconds_count", map[string]string{"queue": "emptyq"}, 0)
+	assertMetricValue(t, metricFamilies, "pbs_queue_job_wait_seconds_sum", map[string]string{"queue": "emptyq"}, 0)
+	assertMetricValue(t, metricFamilies, "pbs_queue_oldest_job_wait_seconds", map[string]string{"queue": "emptyq"}, 0)
 }
 
 func assertMetricValue(t *testing.T, metricFamilies []*dto.MetricFamily, name string, labels map[string]string, expected float64) {

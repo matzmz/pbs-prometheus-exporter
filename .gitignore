@@ -2,3 +2,4 @@ pbs-exporter
 *.log
 dist/
 .cache/
+docs/superpowers/*

@@ -20,6 +20,7 @@
   "graphTooltip": 1,
   "id": 0,
   "links": [],
+  "liveNow": true,
   "panels": [
     {
       "collapsed": false,
@@ -107,7 +108,8 @@
         }
       ],
       "title": "Average CPU Utilization",
-      "type": "stat"
+      "type": "stat",
+      "description": "Average CPU utilization across the selected time range, using used versus total cluster CPU cores."
     },
     {
       "datasource": {
@@ -182,7 +184,8 @@
         }
       ],
       "title": "Peak CPU Utilization",
-      "type": "stat"
+      "type": "stat",
+      "description": "Peak CPU utilization observed in the selected time range."
     },
     {
       "datasource": {
@@ -261,7 +264,8 @@
         }
       ],
       "title": "Average GPU Utilization",
-      "type": "stat"
+      "type": "stat",
+      "description": "Average GPU utilization across the selected time range, using used versus total cluster GPU devices."
     },
     {
       "datasource": {
@@ -340,7 +344,8 @@
         }
       ],
       "title": "Peak GPU Utilization",
-      "type": "stat"
+      "type": "stat",
+      "description": "Peak GPU utilization observed in the selected time range."
     },
     {
       "datasource": {
@@ -412,7 +417,8 @@
         }
       ],
       "title": "CPU Cores Used vs Total",
-      "type": "bargauge"
+      "type": "bargauge",
+      "description": "Current used and total CPU cores for the whole PBS cluster."
     },
     {
       "datasource": {
@@ -484,7 +490,8 @@
         }
       ],
       "title": "GPU Devices Used vs Total",
-      "type": "bargauge"
+      "type": "bargauge",
+      "description": "Current used and total GPU devices for the whole PBS cluster."
     },
     {
       "datasource": {
@@ -496,9 +503,9 @@
           "color": {
             "mode": "continuous-GrYlRd"
           },
-          "decimals": 0,
+          "decimals": 1,
           "mappings": [],
-          "max": 100,
+          "max": 1,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
@@ -509,15 +516,15 @@
               },
               {
                 "color": "#EAB839",
-                "value": 60
+                "value": 0.6
               },
               {
                 "color": "red",
-                "value": 85
+                "value": 0.85
               }
             ]
           },
-          "unit": "percent"
+          "unit": "percentunit"
         },
         "overrides": []
       },
@@ -560,8 +567,8 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "avg_over_time(((100 * sum(pbs_cluster_cpu_cores{state=\"used\"}) / clamp_min(sum(pbs_cluster_cpu_cores{state=\"total\"}), 1)))[$__range:])",
-          "legendFormat": "CPU Pressure",
+          "expr": "sum(pbs_cluster_cpu_cores{state=\"used\"}) / clamp_min(sum(pbs_cluster_cpu_cores{state=\"total\"}), 1)",
+          "legendFormat": "CPU",
           "refId": "A"
         },
         {
@@ -570,13 +577,24 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "avg_over_time(((100 * sum(pbs_cluster_gpu_devices{state=\"used\"}) / clamp_min(sum(pbs_cluster_gpu_devices{state=\"total\"}), 1)))[$__range:])",
-          "legendFormat": "GPU Pressure",
+          "expr": "sum(pbs_cluster_gpu_devices{state=\"used\"}) / clamp_min(sum(pbs_cluster_gpu_devices{state=\"total\"}), 1)",
+          "legendFormat": "GPU",
           "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(pbs_cluster_memory_bytes{state=\"used\"}) / clamp_min(sum(pbs_cluster_memory_bytes{state=\"total\"}), 1)",
+          "legendFormat": "Memory",
+          "refId": "C"
         }
       ],
-      "title": "Cluster Pressure",
-      "type": "bargauge"
+      "title": "Cluster Resource Pressure",
+      "type": "bargauge",
+      "description": "Current CPU, GPU, and memory pressure. Values near red indicate saturated shared resources."
     },
     {
       "datasource": {
@@ -606,7 +624,7 @@
             },
             "insertNulls": false,
             "lineInterpolation": "smooth",
-            "lineWidth": 3,
+            "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
@@ -636,7 +654,9 @@
               }
             ]
           },
-          "unit": "percent"
+          "unit": "percentunit",
+          "max": 1,
+          "min": 0
         },
         "overrides": []
       },
@@ -671,8 +691,8 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "100 * sum(pbs_cluster_cpu_cores{state=\"used\"}) / clamp_min(sum(pbs_cluster_cpu_cores{state=\"total\"}), 1)",
-          "legendFormat": "CPU Utilization",
+          "expr": "sum(pbs_cluster_cpu_cores{state=\"used\"}) / clamp_min(sum(pbs_cluster_cpu_cores{state=\"total\"}), 1)",
+          "legendFormat": "CPU",
           "refId": "A"
         },
         {
@@ -681,13 +701,24 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "100 * sum(pbs_cluster_gpu_devices{state=\"used\"}) / clamp_min(sum(pbs_cluster_gpu_devices{state=\"total\"}), 1)",
-          "legendFormat": "GPU Utilization",
+          "expr": "sum(pbs_cluster_gpu_devices{state=\"used\"}) / clamp_min(sum(pbs_cluster_gpu_devices{state=\"total\"}), 1)",
+          "legendFormat": "GPU",
           "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(pbs_cluster_memory_bytes{state=\"used\"}) / clamp_min(sum(pbs_cluster_memory_bytes{state=\"total\"}), 1)",
+          "legendFormat": "Memory",
+          "refId": "C"
         }
       ],
-      "title": "CPU & GPU Utilization Trend",
-      "type": "timeseries"
+      "title": "Cluster Utilization Trend",
+      "type": "timeseries",
+      "description": "Cluster CPU, GPU, and memory utilization trend for the selected time range."
     },
     {
       "datasource": {
@@ -758,7 +789,8 @@
         }
       ],
       "title": "Job Status Distribution",
-      "type": "piechart"
+      "type": "piechart",
+      "description": "Current job distribution by PBS job state."
     },
     {
       "collapsed": false,
@@ -836,7 +868,8 @@
         }
       ],
       "title": "Total Jobs",
-      "type": "stat"
+      "type": "stat",
+      "description": "Current total jobs visible to the exporter."
     },
     {
       "datasource": {
@@ -866,7 +899,7 @@
             },
             "insertNulls": false,
             "lineInterpolation": "smooth",
-            "lineWidth": 2,
+            "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
@@ -936,7 +969,8 @@
         }
       ],
       "title": "Job Activity by Status",
-      "type": "timeseries"
+      "type": "timeseries",
+      "description": "Current job counts by PBS state over time."
     },
     {
       "datasource": {
@@ -1044,7 +1078,8 @@
         }
       ],
       "title": "Queue Throughput Trend",
-      "type": "timeseries"
+      "type": "timeseries",
+      "description": "Running and total jobs by queue over time. Use it for broad queue activity trends, not detailed queue health."
     },
     {
       "datasource": {
@@ -1104,14 +1139,15 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_jobs{status!=\"running\"})",
-          "legendFormat": "Total Jobs",
+          "expr": "sum(pbs_jobs{status=\"queued\"})",
+          "legendFormat": "Queued Jobs",
           "range": true,
           "refId": "A"
         }
       ],
       "title": "Queued Jobs",
-      "type": "stat"
+      "type": "stat",
+      "description": "Current queued jobs across all queues. This excludes running, held, finished, and exiting jobs."
     },
     {
       "collapsed": false,
@@ -1131,6 +1167,291 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
+      "description": "Current queued jobs per queue, sorted to keep busy queues readable.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-BlPu"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "#EAB839",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 22
+      },
+      "id": 16,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 12,
+        "minVizWidth": 0,
+        "namePlacement": "left",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "topk(20, sum by (queue) (pbs_queue_jobs{state=\"queued\"}))",
+          "legendFormat": "{{queue}}",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "title": "Queued Jobs by Queue",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Current running jobs per queue. Compare with queued jobs to spot stalled or overloaded queues.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "#EAB839",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 22
+      },
+      "id": 17,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 12,
+        "minVizWidth": 0,
+        "namePlacement": "left",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "topk(20, sum by (queue) (pbs_queue_jobs{state=\"running\"}))",
+          "legendFormat": "{{queue}}",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "title": "Running Jobs by Queue",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Enabled and started state for each queue. Any red entry means the queue is disabled or stopped.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "text": "off"
+                },
+                "1": {
+                  "text": "on"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 22
+      },
+      "id": 18,
+      "options": {
+        "displayMode": "basic",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 12,
+        "minVizWidth": 0,
+        "namePlacement": "left",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "pbs_queue_enabled",
+          "legendFormat": "{{queue}} enabled",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "pbs_queue_started",
+          "legendFormat": "{{queue}} started",
+          "refId": "B",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "title": "Queue Availability",
+      "type": "bargauge"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 30
+      },
+      "id": 34,
+      "panels": [],
+      "title": "Queue Times",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Current p95 wait time per queue derived from snapshot bucket metrics. Do not use rate() on these buckets.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1153,13 +1474,13 @@
               "viz": false
             },
             "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 3,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
+            "showPoints": "never",
             "showValues": false,
             "spanNulls": false,
             "stacking": {
@@ -1170,6 +1491,71 @@
               "mode": "off"
             }
           },
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 31
+      },
+      "id": 35,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.95, sum by (queue, le) (pbs_queue_job_wait_seconds_bucket))",
+          "legendFormat": "{{queue}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Queue Wait p95",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Queues with the oldest currently queued job. This is the fastest panel for spotting starvation.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "decimals": 0,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -1179,8 +1565,197 @@
                 "value": 0
               },
               {
+                "color": "#EAB839",
+                "value": 21600
+              },
+              {
                 "color": "red",
-                "value": 80
+                "value": 86400
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 12,
+        "y": 31
+      },
+      "id": 36,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 12,
+        "minVizWidth": 0,
+        "namePlacement": "left",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "topk(15, pbs_queue_oldest_job_wait_seconds)",
+          "legendFormat": "{{queue}}",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "title": "Oldest Queued Job",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Cluster-wide count of queued jobs waiting longer than 1 day, 2 days, and 5 days.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "#EAB839",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 18,
+        "y": 31
+      },
+      "id": 37,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 12,
+        "minVizWidth": 0,
+        "namePlacement": "left",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(clamp_min(pbs_queue_job_wait_seconds_count - ignoring(le) pbs_queue_job_wait_seconds_bucket{le=\"86400\"}, 0))",
+          "legendFormat": "> 1d",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(clamp_min(pbs_queue_job_wait_seconds_count - ignoring(le) pbs_queue_job_wait_seconds_bucket{le=\"172800\"}, 0))",
+          "legendFormat": "> 2d",
+          "refId": "B",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(clamp_min(pbs_queue_job_wait_seconds_count - ignoring(le) pbs_queue_job_wait_seconds_bucket{le=\"432000\"}, 0))",
+          "legendFormat": "> 5d",
+          "refId": "C",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "title": "Backlog Past SLA Thresholds",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Aggregated queued-job wait distribution over time. Y buckets are wait thresholds; color shows job count in each cumulative bucket.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1190,22 +1765,41 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 10,
+        "w": 12,
         "x": 0,
-        "y": 22
+        "y": 38
       },
-      "id": 16,
+      "id": 38,
       "options": {
+        "calculate": false,
+        "cellGap": 2,
+        "cellValues": {
+          "unit": "short"
+        },
+        "color": {
+          "exponent": 0.5,
+          "fill": "dark-orange",
+          "mode": "scheme",
+          "reverse": false,
+          "scheme": "Spectral",
+          "steps": 64
+        },
+        "exemplars": {
+          "color": "rgba(255,0,255,0.7)"
+        },
+        "filterValues": {
+          "le": 1e-09
+        },
         "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "show": true
+        },
+        "rowsFrame": {
+          "layout": "auto"
         },
         "tooltip": {
-          "hideZeros": false,
           "mode": "single",
-          "sort": "none"
+          "showColorScale": false,
+          "yHistogram": false
         }
       },
       "pluginVersion": "12.3.0",
@@ -1216,42 +1810,27 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (queue, state) (pbs_queue_jobs)",
-          "legendFormat": "{{queue}} {{state}}",
+          "expr": "sum by (le) (pbs_queue_job_wait_seconds_bucket)",
+          "legendFormat": "<= {{le}}s",
           "refId": "A"
         }
       ],
-      "title": "Queue Statistics",
-      "type": "timeseries"
+      "title": "Queue Wait Distribution Heatmap",
+      "type": "heatmap"
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
       },
+      "description": "Current average wait time per queue, sorted by the queues with the highest average wait.",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "continuous-RdYlGr"
+            "mode": "continuous-GrYlRd"
           },
           "decimals": 0,
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "red",
-                  "index": 0,
-                  "text": "Disabled"
-                },
-                "1": {
-                  "color": "green",
-                  "index": 1,
-                  "text": "Enabled"
-                }
-              },
-              "type": "value"
-            }
-          ],
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1260,24 +1839,28 @@
                 "value": 0
               },
               {
+                "color": "#EAB839",
+                "value": 21600
+              },
+              {
                 "color": "red",
-                "value": 80
+                "value": 86400
               }
             ]
           },
-          "unit": "none"
+          "unit": "s"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 7,
-        "x": 10,
-        "y": 22
+        "w": 12,
+        "x": 12,
+        "y": 38
       },
-      "id": 17,
+      "id": 39,
       "options": {
-        "displayMode": "basic",
+        "displayMode": "gradient",
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -1285,9 +1868,9 @@
           "showLegend": false
         },
         "maxVizHeight": 300,
-        "minVizHeight": 16,
-        "minVizWidth": 8,
-        "namePlacement": "auto",
+        "minVizHeight": 12,
+        "minVizWidth": 0,
+        "namePlacement": "left",
         "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
@@ -1296,7 +1879,7 @@
           "fields": "",
           "values": false
         },
-        "showUnfilled": false,
+        "showUnfilled": true,
         "sizing": "auto",
         "valueMode": "color"
       },
@@ -1308,104 +1891,14 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "pbs_queue_enabled",
+          "expr": "topk(20, pbs_queue_job_wait_seconds_sum / clamp_min(pbs_queue_job_wait_seconds_count, 1))",
           "legendFormat": "{{queue}}",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
-      "title": "Queue Enabled State",
-      "type": "bargauge"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "continuous-RdYlGr"
-          },
-          "decimals": 0,
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "red",
-                  "index": 0,
-                  "text": "Stopped"
-                },
-                "1": {
-                  "color": "green",
-                  "index": 1,
-                  "text": "Started"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 7,
-        "x": 17,
-        "y": 22
-      },
-      "id": 18,
-      "options": {
-        "displayMode": "basic",
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false
-        },
-        "maxVizHeight": 300,
-        "minVizHeight": 16,
-        "minVizWidth": 8,
-        "namePlacement": "auto",
-        "orientation": "horizontal",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showUnfilled": false,
-        "sizing": "auto",
-        "valueMode": "color"
-      },
-      "pluginVersion": "12.3.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "pbs_queue_started",
-          "legendFormat": "{{queue}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Queue Started State",
+      "title": "Average Wait by Queue",
       "type": "bargauge"
     },
     {
@@ -1414,7 +1907,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 30
+        "y": 46
       },
       "id": 19,
       "panels": [],
@@ -1466,6 +1959,7 @@
             }
           },
           "mappings": [],
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1487,7 +1981,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 31
+        "y": 47
       },
       "id": 20,
       "options": {
@@ -1518,7 +2012,8 @@
         }
       ],
       "title": "Top Users by Running Jobs",
-      "type": "timeseries"
+      "type": "timeseries",
+      "description": "Top users by running jobs. User-labeled metrics must be enabled in exporter configuration."
     },
     {
       "datasource": {
@@ -1536,22 +2031,36 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "fillOpacity": 80,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
             "lineWidth": 1,
+            "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
             },
             "thresholdsStyle": {
               "mode": "off"
             }
           },
           "mappings": [],
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1573,30 +2082,21 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 31
+        "y": 47
       },
       "id": 21,
       "options": {
-        "barRadius": 0,
-        "barWidth": 0.97,
-        "fullHighlight": false,
-        "groupWidth": 0.7,
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
         },
-        "orientation": "auto",
-        "showValue": "auto",
-        "stacking": "none",
         "tooltip": {
           "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        },
-        "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 0
+          "mode": "single",
+          "sort": "none"
+        }
       },
       "pluginVersion": "12.3.0",
       "targets": [
@@ -1612,7 +2112,8 @@
         }
       ],
       "title": "Top Users by Queued Jobs",
-      "type": "barchart"
+      "type": "timeseries",
+      "description": "Top users by queued jobs. User-labeled metrics must be enabled in exporter configuration."
     },
     {
       "collapsed": false,
@@ -1620,7 +2121,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 39
+        "y": 55
       },
       "id": 22,
       "panels": [],
@@ -1653,7 +2154,7 @@
         "h": 7,
         "w": 6,
         "x": 0,
-        "y": 40
+        "y": 56
       },
       "id": 23,
       "options": {
@@ -1696,53 +2197,24 @@
         }
       ],
       "title": "Node Status Overview",
-      "type": "piechart"
+      "type": "piechart",
+      "description": "Current PBS node state distribution."
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
       },
+      "description": "Current CPU, GPU, and memory utilization ratios across the whole cluster.",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "continuous-GrYlRd"
           },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
+          "decimals": 1,
           "mappings": [],
+          "max": 1,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1751,34 +2223,42 @@
                 "value": 0
               },
               {
+                "color": "#EAB839",
+                "value": 0.6
+              },
+              {
                 "color": "red",
-                "value": 80
+                "value": 0.85
               }
             ]
           },
-          "unit": "short"
+          "unit": "percentunit"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 7,
-        "w": 6,
+        "w": 18,
         "x": 6,
-        "y": 40
+        "y": 56
       },
       "id": 24,
       "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
       "pluginVersion": "12.3.0",
       "targets": [
@@ -1788,9 +2268,11 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (state) (pbs_cluster_cpu_cores)",
-          "legendFormat": "CPU {{state}}",
-          "refId": "A"
+          "expr": "sum(pbs_cluster_cpu_cores{state=\"used\"}) / clamp_min(sum(pbs_cluster_cpu_cores{state=\"total\"}), 1)",
+          "legendFormat": "CPU",
+          "refId": "A",
+          "instant": true,
+          "range": false
         },
         {
           "datasource": {
@@ -1798,59 +2280,43 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (state) (pbs_cluster_gpu_devices)",
-          "legendFormat": "GPU {{state}}",
-          "refId": "B"
+          "expr": "sum(pbs_cluster_gpu_devices{state=\"used\"}) / clamp_min(sum(pbs_cluster_gpu_devices{state=\"total\"}), 1)",
+          "legendFormat": "GPU",
+          "refId": "B",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(pbs_cluster_memory_bytes{state=\"used\"}) / clamp_min(sum(pbs_cluster_memory_bytes{state=\"total\"}), 1)",
+          "legendFormat": "Memory",
+          "refId": "C",
+          "instant": true,
+          "range": false
         }
       ],
-      "title": "Real-time CPU/GPU Availability",
-      "type": "timeseries"
+      "title": "Resource Utilization Now",
+      "type": "stat"
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
       },
+      "description": "Top 20 nodes by current CPU utilization. Horizontal bars stay readable with many nodes.",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "continuous-GrYlRd"
           },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
+          "decimals": 1,
           "mappings": [],
+          "max": 1,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1859,8 +2325,12 @@
                 "value": 0
               },
               {
+                "color": "#EAB839",
+                "value": 0.6
+              },
+              {
                 "color": "red",
-                "value": 80
+                "value": 0.85
               }
             ]
           },
@@ -1870,23 +2340,34 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 6,
-        "x": 12,
-        "y": 40
+        "w": 8,
+        "x": 0,
+        "y": 63
       },
       "id": 25,
       "options": {
+        "displayMode": "gradient",
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": false
         },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
+        "maxVizHeight": 300,
+        "minVizHeight": 12,
+        "minVizWidth": 0,
+        "namePlacement": "left",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
       },
       "pluginVersion": "12.3.0",
       "targets": [
@@ -1896,59 +2377,31 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(10, pbs_node_cpu_utilization_ratio)",
+          "expr": "topk(20, pbs_node_cpu_utilization_ratio)",
           "legendFormat": "{{node}}",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
-      "title": "Top Node CPU Utilization",
-      "type": "timeseries"
+      "title": "Top CPU Nodes",
+      "type": "bargauge"
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
       },
+      "description": "Top 20 nodes by current GPU utilization. Nodes without GPUs are naturally absent from the ranking.",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "continuous-GrYlRd"
           },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
+          "decimals": 1,
           "mappings": [],
+          "max": 1,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1957,8 +2410,12 @@
                 "value": 0
               },
               {
+                "color": "#EAB839",
+                "value": 0.6
+              },
+              {
                 "color": "red",
-                "value": 80
+                "value": 0.85
               }
             ]
           },
@@ -1968,23 +2425,34 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 6,
-        "x": 18,
-        "y": 40
+        "w": 8,
+        "x": 8,
+        "y": 63
       },
       "id": 26,
       "options": {
+        "displayMode": "gradient",
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": false
         },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
+        "maxVizHeight": 300,
+        "minVizHeight": 12,
+        "minVizWidth": 0,
+        "namePlacement": "left",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
       },
       "pluginVersion": "12.3.0",
       "targets": [
@@ -1994,13 +2462,100 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(10, pbs_node_gpu_utilization_ratio)",
+          "expr": "topk(20, pbs_node_gpu_utilization_ratio)",
           "legendFormat": "{{node}}",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
-      "title": "Top Node GPU Utilization",
-      "type": "timeseries"
+      "title": "Top GPU Nodes",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Top 20 nodes by current memory utilization, based on used versus total node memory.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "decimals": 1,
+          "mappings": [],
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "#EAB839",
+                "value": 0.6
+              },
+              {
+                "color": "red",
+                "value": 0.85
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 63
+      },
+      "id": 40,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 12,
+        "minVizWidth": 0,
+        "namePlacement": "left",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "topk(20, pbs_node_memory_utilization_ratio)",
+          "legendFormat": "{{node}}",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "title": "Top Memory Nodes",
+      "type": "bargauge"
     },
     {
       "collapsed": false,
@@ -2008,7 +2563,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 47
+        "y": 70
       },
       "id": 27,
       "panels": [],
@@ -2062,7 +2617,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 48
+        "y": 71
       },
       "id": 28,
       "options": {
@@ -2096,7 +2651,8 @@
         }
       ],
       "title": "Exporter Status",
-      "type": "stat"
+      "type": "stat",
+      "description": "Exporter readiness based on the latest valid PBS snapshot."
     },
     {
       "datasource": {
@@ -2130,7 +2686,7 @@
         "h": 4,
         "w": 4,
         "x": 4,
-        "y": 48
+        "y": 71
       },
       "id": 29,
       "options": {
@@ -2164,7 +2720,8 @@
         }
       ],
       "title": "Last Collect Duration",
-      "type": "stat"
+      "type": "stat",
+      "description": "Duration of the last background PBS collection."
     },
     {
       "datasource": {
@@ -2232,7 +2789,7 @@
         "h": 8,
         "w": 16,
         "x": 8,
-        "y": 48
+        "y": 71
       },
       "id": 32,
       "options": {
@@ -2272,7 +2829,8 @@
         }
       ],
       "title": "Collector Timing",
-      "type": "timeseries"
+      "type": "timeseries",
+      "description": "Collector runtime and snapshot age. Rising snapshot age indicates collection lag or failures."
     },
     {
       "datasource": {
@@ -2306,7 +2864,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 52
+        "y": 75
       },
       "id": 30,
       "options": {
@@ -2340,7 +2898,8 @@
         }
       ],
       "title": "Collect Errors Total",
-      "type": "stat"
+      "type": "stat",
+      "description": "Total PBS collection errors since exporter start."
     },
     {
       "datasource": {
@@ -2375,7 +2934,7 @@
         "h": 4,
         "w": 4,
         "x": 4,
-        "y": 52
+        "y": 75
       },
       "id": 31,
       "options": {
@@ -2409,7 +2968,8 @@
         }
       ],
       "title": "Age Since Last Success",
-      "type": "stat"
+      "type": "stat",
+      "description": "Seconds since the latest successful PBS collection."
     }
   ],
   "preload": false,
@@ -2417,15 +2977,13 @@
   "schemaVersion": 42,
   "tags": [
     "pbs",
-    "hpc",
-    "prometheus",
-    "capacity"
+    "hpc"
   ],
   "templating": {
     "list": [
       {
         "current": {
-          "text": "prom-thanos",
+          "text": "prom",
           "value": "eeqekyqsk3ny8e"
         },
         "includeAll": false,
@@ -2443,9 +3001,18 @@
     "from": "now-12h",
     "to": "now"
   },
-  "timepicker": {},
+  "timepicker": {
+    "refresh_intervals": [
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h"
+    ]
+  },
   "timezone": "",
-  "title": "PBS Exporter Cluster Overview",
-  "uid": "pbs-exporter-cluster-overview",
-  "version": 3
+  "title": "PBS Cluster Overview",
+  "uid": "pbs-cluster-overview",
+  "version": 10
 }

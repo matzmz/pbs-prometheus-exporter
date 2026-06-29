@@ -41,6 +41,10 @@ type Collector struct {
 	clusterGPUDesc                  *prometheus.Desc
 	clusterMemoryDesc               *prometheus.Desc
 	queueJobsDesc                   *prometheus.Desc
+	queueJobWaitBucketDesc          *prometheus.Desc
+	queueJobWaitCountDesc           *prometheus.Desc
+	queueJobWaitSumDesc             *prometheus.Desc
+	queueOldestJobWaitDesc          *prometheus.Desc
 	queueEnabledDesc                *prometheus.Desc
 	queueStartedDesc                *prometheus.Desc
 	queueWalltimeDesc               *prometheus.Desc
@@ -185,6 +189,26 @@ func NewCollector(store *Store, options Options) *Collector {
 			"Jobs per PBS queue and state from the latest successful cached collection.",
 			[]string{"queue", "state"}, nil,
 		),
+		queueJobWaitBucketDesc: prometheus.NewDesc(
+			"pbs_queue_job_wait_seconds_bucket",
+			"Cumulative snapshot bucket counts for current queued PBS job wait time by queue from the latest successful cached collection.",
+			[]string{"queue", "le"}, nil,
+		),
+		queueJobWaitCountDesc: prometheus.NewDesc(
+			"pbs_queue_job_wait_seconds_count",
+			"Current queued PBS jobs included in wait-time buckets by queue from the latest successful cached collection.",
+			[]string{"queue"}, nil,
+		),
+		queueJobWaitSumDesc: prometheus.NewDesc(
+			"pbs_queue_job_wait_seconds_sum",
+			"Sum of current queued PBS job wait times by queue from the latest successful cached collection.",
+			[]string{"queue"}, nil,
+		),
+		queueOldestJobWaitDesc: prometheus.NewDesc(
+			"pbs_queue_oldest_job_wait_seconds",
+			"Oldest current queued PBS job wait time by queue from the latest successful cached collection.",
+			[]string{"queue"}, nil,
+		),
 		queueEnabledDesc: prometheus.NewDesc(
 			"pbs_queue_enabled",
 			"Whether a PBS queue is enabled.",
@@ -280,6 +304,10 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 		c.clusterGPUDesc,
 		c.clusterMemoryDesc,
 		c.queueJobsDesc,
+		c.queueJobWaitBucketDesc,
+		c.queueJobWaitCountDesc,
+		c.queueJobWaitSumDesc,
+		c.queueOldestJobWaitDesc,
 		c.queueEnabledDesc,
 		c.queueStartedDesc,
 		c.queueWalltimeDesc,
@@ -431,7 +459,28 @@ func (c *Collector) collectQueues(ch chan<- prometheus.Metric, snapshot *pbs.Sna
 		ch <- prometheus.MustNewConstMetric(c.queueEnabledDesc, prometheus.GaugeValue, boolFloat(queueInfo.Enabled), queueName)
 		ch <- prometheus.MustNewConstMetric(c.queueStartedDesc, prometheus.GaugeValue, boolFloat(queueInfo.Started), queueName)
 		ch <- prometheus.MustNewConstMetric(c.queueWalltimeDesc, prometheus.GaugeValue, float64(queueInfo.Walltime), queueName)
+		c.collectQueueWait(ch, queueName, snapshot.QueueWaits)
 	}
+}
+
+func (c *Collector) collectQueueWait(ch chan<- prometheus.Metric, queueName string, queueWaits *pbs.QueueWaitData) {
+	var info pbs.QueueWaitInfo
+	if queueWaits != nil {
+		info = queueWaits.Queues[queueName]
+	}
+
+	for _, bucket := range pbs.QueueWaitBuckets() {
+		ch <- prometheus.MustNewConstMetric(
+			c.queueJobWaitBucketDesc,
+			prometheus.GaugeValue,
+			float64(info.Buckets[bucket]),
+			queueName,
+			pbs.QueueWaitBucketLabel(bucket),
+		)
+	}
+	ch <- prometheus.MustNewConstMetric(c.queueJobWaitCountDesc, prometheus.GaugeValue, float64(info.Count), queueName)
+	ch <- prometheus.MustNewConstMetric(c.queueJobWaitSumDesc, prometheus.GaugeValue, info.Sum, queueName)
+	ch <- prometheus.MustNewConstMetric(c.queueOldestJobWaitDesc, prometheus.GaugeValue, info.Oldest, queueName)
 }
 
 func (c *Collector) collectServer(ch chan<- prometheus.Metric, server *pbs.ServerData) {

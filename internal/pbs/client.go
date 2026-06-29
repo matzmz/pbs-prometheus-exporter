@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math"
 	"os/exec"
 	"path/filepath"
 	"regexp"
@@ -23,6 +24,7 @@ type Snapshot struct {
 	CollectedAt  time.Time
 	Version      string
 	Jobs         *JobData
+	QueueWaits   *QueueWaitData
 	Nodes        *NodeData
 	Queues       *QueueData
 	QueueSummary QueueSummary
@@ -51,6 +53,11 @@ func (c *Client) Collect(ctx context.Context) (*Snapshot, error) {
 		return nil, err
 	}
 
+	jobsFullOutput, err := c.run(ctx, "qstat", "-f")
+	if err != nil {
+		return nil, err
+	}
+
 	nodesOutput, err := c.run(ctx, "pbsnodes", "-aSj")
 	if err != nil {
 		return nil, err
@@ -68,11 +75,13 @@ func (c *Client) Collect(ctx context.Context) (*Snapshot, error) {
 
 	version := c.getVersion(ctx)
 	queueRunning, queueQueued := c.ParseQstatQSummary(queuesOutput)
+	collectedAt := time.Now().UTC()
 
 	return &Snapshot{
-		CollectedAt: time.Now().UTC(),
+		CollectedAt: collectedAt,
 		Version:     version,
 		Jobs:        c.ParseQstatOutput(jobsOutput),
+		QueueWaits:  c.ParseQstatFullQueueWait(jobsFullOutput, collectedAt),
 		Nodes:       c.ParsePbsnodesOutput(nodesOutput),
 		Queues:      c.ParseQstatQFull(queuesOutput),
 		QueueSummary: QueueSummary{
@@ -131,6 +140,45 @@ type JobData struct {
 	QueueJobCount    map[string]int
 	QueueTotalCount  map[string]int
 	StatusCount      map[string]int
+}
+
+var queueWaitInfBucket = math.Inf(1)
+
+var queueWaitBuckets = []float64{
+	300,
+	1800,
+	3600,
+	7200,
+	21600,
+	43200,
+	86400,
+	172800,
+	432000,
+	queueWaitInfBucket,
+}
+
+func QueueWaitBuckets() []float64 {
+	buckets := make([]float64, len(queueWaitBuckets))
+	copy(buckets, queueWaitBuckets)
+	return buckets
+}
+
+func QueueWaitBucketLabel(bucket float64) string {
+	if math.IsInf(bucket, 1) {
+		return "+Inf"
+	}
+	return strconv.FormatFloat(bucket, 'f', -1, 64)
+}
+
+type QueueWaitData struct {
+	Queues map[string]QueueWaitInfo
+}
+
+type QueueWaitInfo struct {
+	Buckets map[float64]int
+	Count   int
+	Sum     float64
+	Oldest  float64
 }
 
 type NodeData struct {
@@ -227,6 +275,121 @@ func (c *Client) ParseQstatOutput(output string) *JobData {
 	}
 
 	return data
+}
+
+func (c *Client) ParseQstatFullQueueWait(output string, collectedAt time.Time) *QueueWaitData {
+	data := &QueueWaitData{Queues: make(map[string]QueueWaitInfo)}
+
+	type jobRecord struct {
+		state string
+		queue string
+		qtime string
+	}
+
+	var current *jobRecord
+	flush := func() {
+		if current == nil || !strings.EqualFold(current.state, "Q") || current.queue == "" || current.qtime == "" {
+			return
+		}
+
+		queuedAt, ok := parseQtime(current.qtime)
+		if !ok {
+			return
+		}
+
+		wait := collectedAt.Sub(queuedAt).Seconds()
+		if wait < 0 {
+			wait = 0
+		}
+		addQueueWait(data, current.queue, wait)
+	}
+
+	scanner := bufio.NewScanner(strings.NewReader(output))
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+		if strings.HasPrefix(line, "Job Id:") {
+			flush()
+			current = &jobRecord{}
+			continue
+		}
+		if current == nil {
+			continue
+		}
+
+		key, value, ok := splitAttribute(line)
+		if !ok {
+			continue
+		}
+		switch key {
+		case "job_state":
+			current.state = value
+		case "queue":
+			current.queue = value
+		case "qtime":
+			current.qtime = value
+		}
+	}
+	flush()
+
+	return data
+}
+
+func splitAttribute(line string) (string, string, bool) {
+	parts := strings.SplitN(line, "=", 2)
+	if len(parts) != 2 {
+		return "", "", false
+	}
+	return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]), true
+}
+
+func parseQtime(value string) (time.Time, bool) {
+	localLayouts := []string{
+		"Mon Jan _2 15:04:05 2006",
+	}
+	for _, layout := range localLayouts {
+		parsed, err := time.ParseInLocation(layout, value, time.Local)
+		if err == nil {
+			return parsed.UTC(), true
+		}
+	}
+
+	zoneLayouts := []string{
+		"Mon Jan _2 15:04:05 MST 2006",
+		time.RFC1123,
+		time.RFC1123Z,
+	}
+	for _, layout := range zoneLayouts {
+		parsed, err := time.Parse(layout, value)
+		if err == nil {
+			return parsed.UTC(), true
+		}
+	}
+	return time.Time{}, false
+}
+
+func addQueueWait(data *QueueWaitData, queue string, wait float64) {
+	info := data.Queues[queue]
+	if info.Buckets == nil {
+		info.Buckets = make(map[float64]int, len(queueWaitBuckets))
+		for _, bucket := range queueWaitBuckets {
+			info.Buckets[bucket] = 0
+		}
+	}
+
+	info.Count++
+	info.Sum += wait
+	if wait > info.Oldest {
+		info.Oldest = wait
+	}
+	for _, bucket := range queueWaitBuckets {
+		if wait <= bucket {
+			info.Buckets[bucket]++
+		}
+	}
+	data.Queues[queue] = info
 }
 
 func (c *Client) ParseQstatQSummary(output string) (totalRunning int, totalQueued int) {

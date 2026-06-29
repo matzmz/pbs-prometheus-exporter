@@ -83,6 +83,45 @@ The exporter always exposes self-metrics, including:
 
 If PBS collection fails, `pbs_exporter_up` becomes `0` and PBS domain metrics disappear from exposition until collection succeeds again.
 
+## Queue Wait Metrics
+
+The exporter exposes snapshot-based wait-time buckets for jobs currently in `job_state = Q`, aggregated by PBS queue:
+
+- `pbs_queue_job_wait_seconds_bucket{queue,le}`
+- `pbs_queue_job_wait_seconds_count{queue}`
+- `pbs_queue_job_wait_seconds_sum{queue}`
+- `pbs_queue_oldest_job_wait_seconds{queue}`
+
+Wait time is calculated as `snapshot_collected_at - qtime`. The bucket thresholds are:
+
+```text
+5m, 30m, 1h, 2h, 6h, 12h, 1d, 2d, 5d, +Inf
+```
+
+These metrics describe the current queue snapshot. They are gauge-valued cumulative buckets, not event counters, so do not use `rate()` or `increase()` on them.
+
+Current p95 wait per queue:
+
+```promql
+histogram_quantile(
+  0.95,
+  sum by (queue, le) (pbs_queue_job_wait_seconds_bucket)
+)
+```
+
+Jobs waiting more than one day:
+
+```promql
+pbs_queue_job_wait_seconds_count
+- ignoring(le) pbs_queue_job_wait_seconds_bucket{le="86400"}
+```
+
+Worst queues by oldest queued job:
+
+```promql
+topk(10, pbs_queue_oldest_job_wait_seconds)
+```
+
 ## Build
 
 To build a static Linux `amd64` binary in Docker:
