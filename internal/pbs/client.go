@@ -606,7 +606,7 @@ func mapStatusLabel(status string) string {
 	case "Q":
 		return "queued"
 	case "E":
-		return "error"
+		return "exiting"
 	case "B":
 		return "array_job_running"
 	default:

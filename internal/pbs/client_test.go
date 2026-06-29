@@ -5,6 +5,22 @@ import (
 	"time"
 )
 
+func TestParseQstatOutputMapsExitingStatus(t *testing.T) {
+	client := NewClient("", 0, nil)
+
+	data := client.ParseQstatOutput(`Job id            Name             User              Time Use S Queue
+----------------  ---------------- ----------------  -------- - -----
+123.server        job              alice             00:00:00 E workq
+`)
+
+	if got := data.StatusCount["exiting"]; got != 1 {
+		t.Fatalf("exiting count got %d want 1", got)
+	}
+	if got := data.StatusCount["error"]; got != 0 {
+		t.Fatalf("error count got %d want 0", got)
+	}
+}
+
 func TestParseQstatFullQueueWaitAggregatesQueuedJobs(t *testing.T) {
 	client := NewClient("", 0, nil)
 	now := time.Date(2026, 6, 29, 12, 0, 0, 0, time.UTC)
