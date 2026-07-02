@@ -5,46 +5,88 @@ import (
 	"time"
 )
 
-func TestParseQstatOutputMapsExitingStatus(t *testing.T) {
-	client := NewClient("", 0, ClientOptions{}, nil)
-
-	data := client.ParseQstatOutput(`Job id            Name             User              Time Use S Queue
-----------------  ---------------- ----------------  -------- - -----
-123.server        job              alice             00:00:00 E workq
-`)
+func TestParseJobsJSONMapsStatusesAndUsers(t *testing.T) {
+	data := parseJobsJSON(&jobsJSONPayload{
+		Jobs: map[string]jobsJSONRecord{
+			"100.server": {
+				Queue:         "workq",
+				JobState:      "E",
+				EffectiveUser: "alice",
+			},
+			"101.server": {
+				Queue:         "workq",
+				JobState:      "R",
+				EffectiveUser: "alice",
+			},
+			"102.server": {
+				Queue:    "gpuq",
+				JobState: "R",
+				JobOwner: "bob@submit02",
+			},
+			"103.server": {
+				Queue:         "workq",
+				JobState:      "Q",
+				EffectiveUser: "alice",
+			},
+		},
+	})
 
 	if got := data.StatusCount["exiting"]; got != 1 {
 		t.Fatalf("exiting count got %d want 1", got)
 	}
-	if got := data.StatusCount["error"]; got != 0 {
-		t.Fatalf("error count got %d want 0", got)
+	if got := data.StatusCount["running"]; got != 2 {
+		t.Fatalf("running count got %d want 2", got)
+	}
+	if got := data.StatusCount["queued"]; got != 1 {
+		t.Fatalf("queued count got %d want 1", got)
+	}
+	if got := data.UserJobCount["alice"]; got != 1 {
+		t.Fatalf("alice running jobs got %d want 1", got)
+	}
+	if got := data.UserJobCount["bob"]; got != 1 {
+		t.Fatalf("bob running jobs got %d want 1", got)
+	}
+	if got := data.QueuedJobsByUser["alice"]; got != 1 {
+		t.Fatalf("alice queued jobs got %d want 1", got)
+	}
+	if got := data.QueueJobCount["workq"]; got != 1 {
+		t.Fatalf("workq running jobs got %d want 1", got)
+	}
+	if got := data.QueueJobCount["gpuq"]; got != 1 {
+		t.Fatalf("gpuq running jobs got %d want 1", got)
+	}
+	if got := data.QueueTotalCount["workq"]; got != 3 {
+		t.Fatalf("workq total jobs got %d want 3", got)
 	}
 }
 
-func TestParseQstatFullQueueWaitAggregatesQueuedJobs(t *testing.T) {
-	client := NewClient("", 0, ClientOptions{}, nil)
+func TestParseQueueWaitJSONAggregatesQueuedJobs(t *testing.T) {
 	now := time.Date(2026, 6, 29, 12, 0, 0, 0, time.UTC)
 
-	data := client.ParseQstatFullQueueWait(`Job Id: 100.server
-    job_state = Q
-    queue = workq
-    qtime = Mon Jun 29 11:55:00 2026
-
-Job Id: 101.server
-    job_state = Q
-    queue = workq
-    qtime = Mon Jun 29 11:00:00 2026
-
-Job Id: 102.server
-    job_state = Q
-    queue = longq
-    qtime = Sat Jun 27 12:00:00 2026
-
-Job Id: 103.server
-    job_state = R
-    queue = workq
-    qtime = Mon Jun 29 10:00:00 2026
-`, now)
+	data := parseQueueWaitJSON(&jobsJSONPayload{
+		Jobs: map[string]jobsJSONRecord{
+			"100.server": {
+				Queue:    "workq",
+				JobState: "Q",
+				Qtime:    "Mon Jun 29 11:55:00 2026",
+			},
+			"101.server": {
+				Queue:    "workq",
+				JobState: "Q",
+				Qtime:    "Mon Jun 29 11:00:00 2026",
+			},
+			"102.server": {
+				Queue:    "longq",
+				JobState: "Q",
+				Qtime:    "Sat Jun 27 12:00:00 2026",
+			},
+			"103.server": {
+				Queue:    "workq",
+				JobState: "R",
+				Qtime:    "Mon Jun 29 10:00:00 2026",
+			},
+		},
+	}, now)
 
 	workq := data.Queues["workq"]
 	if workq.Count != 2 {
@@ -69,23 +111,26 @@ Job Id: 103.server
 	assertBucket(t, longq, 172800, 1)
 }
 
-func TestParseQstatFullQueueWaitSkipsMissingFieldsAndClampsNegativeWaits(t *testing.T) {
-	client := NewClient("", 0, ClientOptions{}, nil)
+func TestParseQueueWaitJSONSkipsMissingFieldsAndClampsNegativeWaits(t *testing.T) {
 	now := time.Date(2026, 6, 29, 12, 0, 0, 0, time.UTC)
 
-	data := client.ParseQstatFullQueueWait(`Job Id: 200.server
-    job_state = Q
-    queue = workq
-
-Job Id: 201.server
-    job_state = Q
-    qtime = Mon Jun 29 11:55:00 2026
-
-Job Id: 202.server
-    job_state = Q
-    queue = futureq
-    qtime = Mon Jun 29 12:05:00 2026
-`, now)
+	data := parseQueueWaitJSON(&jobsJSONPayload{
+		Jobs: map[string]jobsJSONRecord{
+			"200.server": {
+				Queue:    "workq",
+				JobState: "Q",
+			},
+			"201.server": {
+				JobState: "Q",
+				Qtime:    "Mon Jun 29 11:55:00 2026",
+			},
+			"202.server": {
+				Queue:    "futureq",
+				JobState: "Q",
+				Qtime:    "Mon Jun 29 12:05:00 2026",
+			},
+		},
+	}, now)
 
 	if _, ok := data.Queues["workq"]; ok {
 		t.Fatal("workq should be skipped when qtime is missing")
@@ -104,6 +149,135 @@ Job Id: 202.server
 	assertBucket(t, futureq, 300, 1)
 }
 
+func TestParseQueuesJSONBuildsQueueInfoAndSummary(t *testing.T) {
+	queueData := parseQueuesJSON(&queuesJSONPayload{
+		Queue: map[string]queueJSONRecord{
+			"workq": {
+				StateCount:  "Transit:0 Queued:2 Held:0 Waiting:0 Running:4 Exiting:0",
+				Enabled:     jsonScalar{text: "True", set: true},
+				Started:     jsonScalar{text: "True", set: true},
+				MaxWalltime: jsonScalar{text: "47:00:00", set: true},
+			},
+			"gpuq": {
+				StateCount:      "Transit:0 Queued:1 Held:0 Waiting:0 Running:0 Exiting:0",
+				Enabled:         jsonScalar{text: "False", set: true},
+				Started:         jsonScalar{text: "True", set: true},
+				DefaultWalltime: jsonScalar{text: "12:00:00", set: true},
+			},
+		},
+	})
+
+	workq := queueData.Queues["workq"]
+	if workq.Running != 4 || workq.Queued != 2 {
+		t.Fatalf("unexpected workq counts: %+v", workq)
+	}
+	if !workq.Enabled || !workq.Started {
+		t.Fatalf("unexpected workq booleans: %+v", workq)
+	}
+	if workq.Walltime != 169200 {
+		t.Fatalf("unexpected workq walltime: %d", workq.Walltime)
+	}
+
+	gpuq := queueData.Queues["gpuq"]
+	if gpuq.Enabled {
+		t.Fatalf("expected gpuq disabled: %+v", gpuq)
+	}
+	if gpuq.Walltime != 43200 {
+		t.Fatalf("unexpected gpuq walltime: %d", gpuq.Walltime)
+	}
+
+	summary := summarizeQueues(queueData)
+	if summary.Running != 4 || summary.Queued != 3 {
+		t.Fatalf("unexpected queue summary: %+v", summary)
+	}
+}
+
+func TestParseServerJSONBuildsServerData(t *testing.T) {
+	server := parseServerJSON(&serverJSONPayload{
+		Server: map[string]serverJSONRecord{
+			"pbs": {
+				ServerState:        "Active",
+				Scheduling:         jsonScalar{text: "True", set: true},
+				TotalJobs:          jsonScalar{text: "6", set: true},
+				StateCount:         "Transit:0 Queued:2 Held:1 Waiting:0 Running:4 Exiting:3",
+				AssignedCPUs:       jsonScalar{text: "16", set: true},
+				AssignedMemory:     jsonScalar{text: "128gb", set: true},
+				AssignedNodes:      jsonScalar{text: "2", set: true},
+				LicenseCount:       "Avail_Global:4 Used:2",
+				MaxArraySize:       jsonScalar{text: "1000", set: true},
+				JobHistoryEnabled:  jsonScalar{text: "True", set: true},
+				JobHistoryDuration: jsonScalar{text: "24:00:00", set: true},
+			},
+		},
+	})
+
+	if server.State != "Active" || !server.Scheduling {
+		t.Fatalf("unexpected server state: %+v", server)
+	}
+	if server.TotalJobs != 6 || server.JobsRunning != 4 || server.JobsQueued != 2 {
+		t.Fatalf("unexpected server counts: %+v", server)
+	}
+	if server.JobsHeld != 1 || server.JobsExiting != 3 {
+		t.Fatalf("unexpected server state counts: %+v", server)
+	}
+	if server.ResourcesNcpus != 16 || server.ResourcesNodect != 2 {
+		t.Fatalf("unexpected assigned resources: %+v", server)
+	}
+	if server.ResourcesMemBytes != 128*1024*1024*1024 {
+		t.Fatalf("unexpected assigned memory: %v", server.ResourcesMemBytes)
+	}
+	if server.LicensesAvailable != 4 || server.LicensesUsed != 2 {
+		t.Fatalf("unexpected licenses: %+v", server)
+	}
+	if !server.JobHistoryEnabled || server.JobHistoryDuration != 86400 {
+		t.Fatalf("unexpected job history: %+v", server)
+	}
+}
+
+func TestParseNodesJSONBuildsNodeData(t *testing.T) {
+	nodes := parseNodesJSON(&nodesJSONPayload{
+		Nodes: map[string]nodeJSONRecord{
+			"node01": {
+				State:  "free",
+				Jobs:   jsonScalar{text: "2", set: true},
+				Memory: jsonScalar{text: "64gb/128gb", set: true},
+				CPUs:   jsonScalar{text: "12/16", set: true},
+				GPUs:   jsonScalar{text: "1/2", set: true},
+			},
+			"node02": {
+				State:    "<various>",
+				JobCount: jsonScalar{text: "1", set: true},
+				Memory:   jsonScalar{text: "32gb/64gb", set: true},
+				CPUs:     jsonScalar{text: "0/8", set: true},
+				GPUs:     jsonScalar{text: "0/0", set: true},
+			},
+			"node03": {
+				State: "state-unknown",
+			},
+		},
+	})
+
+	if nodes.CountFree != 1 || nodes.CountBusy != 1 || nodes.CountOffline != 0 || nodes.CountDown != 0 {
+		t.Fatalf("unexpected node counts: %+v", nodes)
+	}
+
+	node01 := nodes.Nodes["node01"]
+	if node01.Jobs != 2 || node01.CPUsAvailable != 12 || node01.CPUsTotal != 16 {
+		t.Fatalf("unexpected node01 cpu data: %+v", node01)
+	}
+	if node01.GPUsAvailable != 1 || node01.GPUsTotal != 2 {
+		t.Fatalf("unexpected node01 gpu data: %+v", node01)
+	}
+	if node01.MemoryAvailable != 64*1024*1024*1024 || node01.MemoryTotal != 128*1024*1024*1024 {
+		t.Fatalf("unexpected node01 memory data: %+v", node01)
+	}
+
+	node02 := nodes.Nodes["node02"]
+	if node02.State != "job-busy" || node02.Jobs != 1 {
+		t.Fatalf("unexpected node02 state: %+v", node02)
+	}
+}
+
 func assertBucket(t *testing.T, info QueueWaitInfo, upperBound float64, expected int) {
 	t.Helper()
 	if got := info.Buckets[upperBound]; got != expected {
@@ -112,10 +286,9 @@ func assertBucket(t *testing.T, info QueueWaitInfo, upperBound float64, expected
 }
 
 func TestParseJobInspectionOutputParsesTypedMetrics(t *testing.T) {
-	client := NewClient("", 0, ClientOptions{IncludeJobInspection: true}, nil)
 	collectedAt := time.Date(2026, 7, 2, 10, 0, 0, 0, time.UTC)
 
-	data, err := client.ParseJobInspectionOutput(`{
+	data, err := parseJobInspectionJSON(`{
   "Jobs": {
     "100.server": {
       "queue": "workq",
@@ -161,7 +334,7 @@ func TestParseJobInspectionOutputParsesTypedMetrics(t *testing.T) {
   }
 }`, collectedAt)
 	if err != nil {
-		t.Fatalf("ParseJobInspectionOutput returned error: %v", err)
+		t.Fatalf("parseJobInspectionJSON returned error: %v", err)
 	}
 
 	if len(data.Jobs) != 2 {

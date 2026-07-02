@@ -108,6 +108,13 @@ func (s *jsonScalar) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
+	var boolean bool
+	if err := json.Unmarshal(trimmed, &boolean); err == nil {
+		s.text = strconv.FormatBool(boolean)
+		s.set = true
+		return nil
+	}
+
 	var number json.Number
 	if err := json.Unmarshal(trimmed, &number); err == nil {
 		s.text = number.String()
@@ -130,6 +137,31 @@ func (s jsonScalar) optionalNumber() OptionalFloat64 {
 	}
 
 	return newOptionalFloat64(value)
+}
+
+func (s jsonScalar) boolValue() bool {
+	switch strings.ToLower(s.textValue()) {
+	case "true", "t", "yes", "y", "1":
+		return true
+	default:
+		return false
+	}
+}
+
+func (s jsonScalar) bytesValue() float64 {
+	return s.optionalBytes().Value
+}
+
+func (s jsonScalar) durationSecondsValue() int {
+	return int(s.optionalDurationSeconds().Value)
+}
+
+func (s jsonScalar) intValue() int {
+	return int(s.optionalNumber().Value)
+}
+
+func (s jsonScalar) textValue() string {
+	return strings.TrimSpace(s.text)
 }
 
 func (s jsonScalar) optionalDurationSeconds() OptionalFloat64 {
@@ -158,7 +190,7 @@ func (s jsonScalar) optionalBytes() OptionalFloat64 {
 	return newOptionalFloat64(value)
 }
 
-func (c *Client) ParseJobInspectionOutput(output string, collectedAt time.Time) (*JobInspectionData, error) {
+func parseJobInspectionJSON(output string, collectedAt time.Time) (*JobInspectionData, error) {
 	var payload jobInspectionPayload
 	if err := json.Unmarshal([]byte(output), &payload); err != nil {
 		return nil, fmt.Errorf("parse qstat -F json -f output: %w", err)

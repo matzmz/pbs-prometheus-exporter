@@ -1,7 +1,6 @@
 package pbs
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"log/slog"
@@ -48,12 +47,11 @@ type CollectionResult struct {
 	JobInspectionError     error
 }
 
-type snapshotOutputs struct {
-	jobs      string
-	jobsFull  string
-	nodes     string
-	queues    string
-	server    string
+type snapshotJSONPayloads struct {
+	jobs   *jobsJSONPayload
+	nodes  *nodesJSONPayload
+	queues *queuesJSONPayload
+	server *serverJSONPayload
 }
 
 func NewClient(binaryDir string, timeout time.Duration, options ClientOptions, logger *slog.Logger) *Client {
@@ -69,27 +67,26 @@ func NewClient(binaryDir string, timeout time.Duration, options ClientOptions, l
 }
 
 func (c *Client) Collect(ctx context.Context) (*CollectionResult, error) {
-	outputs, err := c.collectSnapshotOutputs(ctx)
+	payloads, err := c.collectSnapshotPayloads(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	version := c.getVersion(ctx)
-	queueRunning, queueQueued := c.ParseQstatQSummary(outputs.queues)
 	collectedAt := time.Now().UTC()
+	jobs := parseJobsJSON(payloads.jobs)
+	queueWaits := parseQueueWaitJSON(payloads.jobs, collectedAt)
+	queues := parseQueuesJSON(payloads.queues)
 
 	snapshot := &Snapshot{
-		CollectedAt: collectedAt,
-		Version:     version,
-		Jobs:        c.ParseQstatOutput(outputs.jobs),
-		QueueWaits:  c.ParseQstatFullQueueWait(outputs.jobsFull, collectedAt),
-		Nodes:       c.ParsePbsnodesOutput(outputs.nodes),
-		Queues:      c.ParseQstatQFull(outputs.queues),
-		QueueSummary: QueueSummary{
-			Running: queueRunning,
-			Queued:  queueQueued,
-		},
-		Server: c.ParseQstatBf(outputs.server),
+		CollectedAt:  collectedAt,
+		Version:      version,
+		Jobs:         jobs,
+		QueueWaits:   queueWaits,
+		Nodes:        parseNodesJSON(payloads.nodes),
+		Queues:       queues,
+		QueueSummary: summarizeQueues(queues),
+		Server:       parseServerJSON(payloads.server),
 	}
 
 	result := &CollectionResult{Snapshot: snapshot}
@@ -104,7 +101,7 @@ func (c *Client) Collect(ctx context.Context) (*CollectionResult, error) {
 		return result, nil
 	}
 
-	jobInspection, err := c.ParseJobInspectionOutput(jobInspectionOutput, collectedAt)
+	jobInspection, err := parseJobInspectionJSON(jobInspectionOutput, collectedAt)
 	if err != nil {
 		result.JobInspectionError = err
 		return result, nil
@@ -115,39 +112,65 @@ func (c *Client) Collect(ctx context.Context) (*CollectionResult, error) {
 	return result, nil
 }
 
-func (c *Client) collectSnapshotOutputs(ctx context.Context) (*snapshotOutputs, error) {
-	jobsOutput, err := c.run(ctx, "qstat", "-t")
+func (c *Client) collectSnapshotPayloads(ctx context.Context) (*snapshotJSONPayloads, error) {
+	jobsPayload, err := c.collectJobsJSON(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	jobsFullOutput, err := c.run(ctx, "qstat", "-f")
+	nodesPayload, err := c.collectNodesJSON(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	nodesOutput, err := c.run(ctx, "pbsnodes", "-aSj")
+	queuesPayload, err := c.collectQueuesJSON(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	queuesOutput, err := c.run(ctx, "qstat", "-q")
+	serverPayload, err := c.collectServerJSON(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	serverOutput, err := c.run(ctx, "qstat", "-Bf")
-	if err != nil {
-		return nil, err
-	}
-
-	return &snapshotOutputs{
-		jobs:     jobsOutput,
-		jobsFull: jobsFullOutput,
-		nodes:    nodesOutput,
-		queues:   queuesOutput,
-		server:   serverOutput,
+	return &snapshotJSONPayloads{
+		jobs:   jobsPayload,
+		nodes:  nodesPayload,
+		queues: queuesPayload,
+		server: serverPayload,
 	}, nil
+}
+
+func (c *Client) collectJobsJSON(ctx context.Context) (*jobsJSONPayload, error) {
+	payload := &jobsJSONPayload{}
+	if err := c.collectJSON(ctx, payload, "qstat", "-f", "-t", "-F", "json"); err != nil {
+		return nil, err
+	}
+	return payload, nil
+}
+
+func (c *Client) collectNodesJSON(ctx context.Context) (*nodesJSONPayload, error) {
+	payload := &nodesJSONPayload{}
+	if err := c.collectJSON(ctx, payload, "pbsnodes", "-aSj", "-F", "json"); err != nil {
+		return nil, err
+	}
+	return payload, nil
+}
+
+func (c *Client) collectQueuesJSON(ctx context.Context) (*queuesJSONPayload, error) {
+	payload := &queuesJSONPayload{}
+	if err := c.collectJSON(ctx, payload, "qstat", "-Q", "-f", "-F", "json"); err != nil {
+		return nil, err
+	}
+	return payload, nil
+}
+
+func (c *Client) collectServerJSON(ctx context.Context) (*serverJSONPayload, error) {
+	payload := &serverJSONPayload{}
+	if err := c.collectJSON(ctx, payload, "qstat", "-Bf", "-F", "json"); err != nil {
+		return nil, err
+	}
+	return payload, nil
 }
 
 func (c *Client) run(ctx context.Context, name string, args ...string) (string, error) {
@@ -289,120 +312,6 @@ type ServerData struct {
 	JobHistoryDuration int
 }
 
-func (c *Client) ParseQstatOutput(output string) *JobData {
-	data := &JobData{
-		UserJobCount:     make(map[string]int),
-		QueuedJobsByUser: make(map[string]int),
-		QueueJobCount:    make(map[string]int),
-		QueueTotalCount:  make(map[string]int),
-		StatusCount:      make(map[string]int),
-	}
-
-	scanner := bufio.NewScanner(strings.NewReader(output))
-	lineCount := 0
-
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		lineCount++
-
-		if lineCount <= 2 || line == "" || strings.Contains(line, "----") {
-			continue
-		}
-
-		fields := strings.Fields(line)
-		if len(fields) < 6 {
-			continue
-		}
-
-		user := fields[2]
-		status := fields[4]
-		queue := fields[5]
-		statusLabel := mapStatusLabel(status)
-
-		data.StatusCount[statusLabel]++
-		data.QueueTotalCount[queue]++
-
-		if status == "R" {
-			data.UserJobCount[user]++
-			data.QueueJobCount[queue]++
-		}
-
-		if status == "Q" {
-			data.QueuedJobsByUser[user]++
-		}
-	}
-
-	return data
-}
-
-func (c *Client) ParseQstatFullQueueWait(output string, collectedAt time.Time) *QueueWaitData {
-	data := &QueueWaitData{Queues: make(map[string]QueueWaitInfo)}
-
-	type jobRecord struct {
-		state string
-		queue string
-		qtime string
-	}
-
-	var current *jobRecord
-	flush := func() {
-		if current == nil || !strings.EqualFold(current.state, "Q") || current.queue == "" || current.qtime == "" {
-			return
-		}
-
-		queuedAt, ok := parseQtime(current.qtime)
-		if !ok {
-			return
-		}
-
-		wait := collectedAt.Sub(queuedAt).Seconds()
-		if wait < 0 {
-			wait = 0
-		}
-		addQueueWait(data, current.queue, wait)
-	}
-
-	scanner := bufio.NewScanner(strings.NewReader(output))
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
-		}
-		if strings.HasPrefix(line, "Job Id:") {
-			flush()
-			current = &jobRecord{}
-			continue
-		}
-		if current == nil {
-			continue
-		}
-
-		key, value, ok := splitAttribute(line)
-		if !ok {
-			continue
-		}
-		switch key {
-		case "job_state":
-			current.state = value
-		case "queue":
-			current.queue = value
-		case "qtime":
-			current.qtime = value
-		}
-	}
-	flush()
-
-	return data
-}
-
-func splitAttribute(line string) (string, string, bool) {
-	parts := strings.SplitN(line, "=", 2)
-	if len(parts) != 2 {
-		return "", "", false
-	}
-	return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]), true
-}
-
 func parseQtime(value string) (time.Time, bool) {
 	localLayouts := []string{
 		"Mon Jan _2 15:04:05 2006",
@@ -450,209 +359,6 @@ func addQueueWait(data *QueueWaitData, queue string, wait float64) {
 	data.Queues[queue] = info
 }
 
-func (c *Client) ParseQstatQSummary(output string) (totalRunning int, totalQueued int) {
-	scanner := bufio.NewScanner(strings.NewReader(output))
-	seenSeparator := false
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
-		}
-		if strings.HasPrefix(line, "---") {
-			seenSeparator = true
-			continue
-		}
-		if seenSeparator {
-			fields := strings.Fields(line)
-			if len(fields) >= 2 {
-				if v, err := strconv.Atoi(fields[0]); err == nil {
-					totalRunning = v
-				}
-				if v, err := strconv.Atoi(fields[1]); err == nil {
-					totalQueued = v
-				}
-				return
-			}
-		}
-
-		fields := strings.Fields(line)
-		if len(fields) < 3 || strings.EqualFold(fields[0], "Queue") || strings.EqualFold(fields[0], "server:") {
-			continue
-		}
-		var nums []int
-		for _, f := range fields {
-			if n, err := strconv.Atoi(f); err == nil {
-				nums = append(nums, n)
-			}
-		}
-		if len(nums) >= 2 {
-			totalRunning += nums[len(nums)-2]
-			totalQueued += nums[len(nums)-1]
-		}
-	}
-	return
-}
-
-func (c *Client) ParseQstatQFull(output string) *QueueData {
-	data := &QueueData{Queues: make(map[string]QueueInfo)}
-
-	scanner := bufio.NewScanner(strings.NewReader(output))
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.HasPrefix(line, "server:") || strings.HasPrefix(strings.ToLower(line), "queue ") || strings.HasPrefix(line, "---") {
-			continue
-		}
-
-		fields := strings.Fields(line)
-		if len(fields) < 9 {
-			continue
-		}
-
-		queueName := fields[0]
-		walltimeStr := fields[2]
-		stateStr := fields[len(fields)-1]
-		if len(fields) >= 10 {
-			stateStr = fields[len(fields)-2] + " " + fields[len(fields)-1]
-		}
-
-		var nums []int
-		for _, f := range fields {
-			if n, err := strconv.Atoi(f); err == nil {
-				nums = append(nums, n)
-			}
-		}
-
-		running := 0
-		queued := 0
-		if len(nums) >= 2 {
-			running = nums[len(nums)-2]
-			queued = nums[len(nums)-1]
-		}
-
-		data.Queues[queueName] = QueueInfo{
-			Running:  running,
-			Queued:   queued,
-			Enabled:  strings.Contains(stateStr, "E"),
-			Started:  strings.Contains(stateStr, "R"),
-			Walltime: parseWalltimeToSeconds(walltimeStr),
-		}
-	}
-	return data
-}
-
-func (c *Client) ParseQstatBf(output string) *ServerData {
-	data := &ServerData{}
-
-	scanner := bufio.NewScanner(strings.NewReader(output))
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-
-		switch {
-		case strings.HasPrefix(line, "server_state"):
-			data.State = fieldValue(line)
-		case strings.HasPrefix(line, "scheduling"):
-			data.Scheduling = strings.EqualFold(fieldValue(line), "True")
-		case strings.HasPrefix(line, "total_jobs"):
-			data.TotalJobs, _ = strconv.Atoi(fieldValue(line))
-		case strings.HasPrefix(line, "state_count"):
-			parseStateCount(fieldValue(line), data)
-		case strings.HasPrefix(line, "resources_assigned.ncpus"):
-			data.ResourcesNcpus, _ = strconv.Atoi(fieldValue(line))
-		case strings.HasPrefix(line, "resources_assigned.mem"):
-			data.ResourcesMemBytes = parseMemoryToBytes(fieldValue(line))
-		case strings.HasPrefix(line, "resources_assigned.nodect"):
-			data.ResourcesNodect, _ = strconv.Atoi(fieldValue(line))
-		case strings.HasPrefix(line, "license_count"):
-			parseLicenseCount(fieldValue(line), data)
-		case strings.HasPrefix(line, "max_array_size"):
-			data.MaxArraySize, _ = strconv.Atoi(fieldValue(line))
-		case strings.HasPrefix(line, "job_history_enable"):
-			data.JobHistoryEnabled = strings.EqualFold(fieldValue(line), "True")
-		case strings.HasPrefix(line, "job_history_duration"):
-			data.JobHistoryDuration = parseWalltimeToSeconds(fieldValue(line))
-		}
-	}
-
-	return data
-}
-
-func (c *Client) ParsePbsnodesOutput(output string) *NodeData {
-	data := &NodeData{Nodes: make(map[string]NodeInfo)}
-
-	scanner := bufio.NewScanner(strings.NewReader(output))
-	lineCount := 0
-
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		lineCount++
-
-		if lineCount <= 2 || line == "" || strings.Contains(line, "----") {
-			continue
-		}
-
-		fields := strings.Fields(line)
-		if len(fields) < 9 {
-			continue
-		}
-
-		nodeName := fields[0]
-		state := fields[1]
-		njobs := fields[2]
-		memField := fields[5]
-		cpuField := fields[6]
-		gpuField := fields[8]
-
-		if state == "state-unknown" {
-			continue
-		}
-
-		normalizedState := normalizeNodeState(state)
-		switch normalizedState {
-		case "free":
-			data.CountFree++
-		case "job-busy":
-			data.CountBusy++
-		case "offline":
-			data.CountOffline++
-		default:
-			data.CountDown++
-		}
-
-		jobs, _ := strconv.Atoi(njobs)
-		memParts := strings.Split(memField, "/")
-		availableMem := float64(0)
-		totalMem := float64(0)
-		if len(memParts) == 2 {
-			availableMem = parseMemoryToBytes(memParts[0])
-			totalMem = parseMemoryToBytes(memParts[1])
-		}
-
-		freeCpus, totalCpus := parseFraction(cpuField)
-		freeGpus, totalGpus := parseFraction(gpuField)
-
-		data.Nodes[nodeName] = NodeInfo{
-			State:           normalizedState,
-			Jobs:            jobs,
-			CPUsAvailable:   freeCpus,
-			CPUsTotal:       totalCpus,
-			GPUsAvailable:   freeGpus,
-			GPUsTotal:       totalGpus,
-			MemoryAvailable: availableMem,
-			MemoryTotal:     totalMem,
-		}
-	}
-
-	return data
-}
-
-func fieldValue(line string) string {
-	parts := strings.SplitN(line, "=", 2)
-	if len(parts) != 2 {
-		return ""
-	}
-	return strings.TrimSpace(parts[1])
-}
-
 func mapStatusLabel(status string) string {
 	switch strings.ToUpper(status) {
 	case "F":
@@ -681,44 +387,6 @@ func normalizeNodeState(state string) string {
 		return state
 	default:
 		return "down"
-	}
-}
-
-func parseStateCount(s string, data *ServerData) {
-	for _, part := range strings.Fields(s) {
-		kv := strings.SplitN(part, ":", 2)
-		if len(kv) != 2 {
-			continue
-		}
-		val, _ := strconv.Atoi(strings.TrimSpace(kv[1]))
-		switch strings.TrimSpace(kv[0]) {
-		case "Running":
-			data.JobsRunning = val
-		case "Queued":
-			data.JobsQueued = val
-		case "Held":
-			data.JobsHeld = val
-		case "Waiting":
-			data.JobsWaiting = val
-		case "Exiting":
-			data.JobsExiting = val
-		}
-	}
-}
-
-func parseLicenseCount(s string, data *ServerData) {
-	for _, part := range strings.Fields(s) {
-		kv := strings.SplitN(part, ":", 2)
-		if len(kv) != 2 {
-			continue
-		}
-		val, _ := strconv.Atoi(strings.TrimSpace(kv[1]))
-		switch strings.TrimSpace(kv[0]) {
-		case "Avail_Global":
-			data.LicensesAvailable = val
-		case "Used":
-			data.LicensesUsed = val
-		}
 	}
 }
 

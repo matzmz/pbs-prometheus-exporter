@@ -7,6 +7,7 @@ This implementation is a ground-up rewrite inspired by  `[pbs-exporter](https://
 ## Design
 
 - PBS commands run in a background worker at a configurable interval.
+- Base PBS snapshot collection uses JSON-capable PBS commands to avoid fragile text parsing.
 - The worker builds one coherent in-memory snapshot of jobs, nodes, queues, and server state.
 - `/metrics` exposes only the latest valid snapshot.
 - If a collection fails, PBS metrics are cleared and the exporter exposes failure through self-metrics.
