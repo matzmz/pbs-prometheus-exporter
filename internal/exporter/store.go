@@ -14,23 +14,27 @@ type Store struct {
 }
 
 type Status struct {
-	Up                         bool
-	LastCollectTimestamp       time.Time
+	Up                          bool
+	LastCollectTimestamp        time.Time
 	LastCollectSuccessTimestamp time.Time
-	SnapshotTimestamp          time.Time
-	LastCollectDuration        time.Duration
-	CollectErrorsTotal         uint64
-	LastError                  string
+	SnapshotTimestamp           time.Time
+	LastCollectDuration         time.Duration
+	CollectErrorsTotal          uint64
+	LastError                   string
+	JobInspectionUp             bool
+	JobInspectionErrorsTotal    uint64
+	JobInspectionLastSuccessAt  time.Time
 }
 
 func NewStore() *Store {
 	return &Store{}
 }
 
-func (s *Store) UpdateSuccess(snapshot *pbs.Snapshot, collectedAt time.Time, duration time.Duration) {
+func (s *Store) UpdateSuccess(result *pbs.CollectionResult, collectedAt time.Time, duration time.Duration) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	snapshot := result.Snapshot
 	s.snapshot = snapshot
 	s.status.Up = true
 	s.status.LastCollectTimestamp = collectedAt
@@ -38,6 +42,7 @@ func (s *Store) UpdateSuccess(snapshot *pbs.Snapshot, collectedAt time.Time, dur
 	s.status.SnapshotTimestamp = snapshot.CollectedAt
 	s.status.LastCollectDuration = duration
 	s.status.LastError = ""
+	s.applyJobInspectionResult(result, collectedAt)
 }
 
 func (s *Store) Clear(collectedAt time.Time, duration time.Duration, err error) {
@@ -49,9 +54,28 @@ func (s *Store) Clear(collectedAt time.Time, duration time.Duration, err error) 
 	s.status.LastCollectTimestamp = collectedAt
 	s.status.SnapshotTimestamp = time.Time{}
 	s.status.LastCollectDuration = duration
+	s.status.JobInspectionUp = false
 	if err != nil {
 		s.status.CollectErrorsTotal++
 		s.status.LastError = err.Error()
+	}
+}
+
+func (s *Store) applyJobInspectionResult(result *pbs.CollectionResult, collectedAt time.Time) {
+	if !result.JobInspectionAttempted {
+		s.status.JobInspectionUp = false
+		return
+	}
+
+	if result.JobInspectionError != nil {
+		s.status.JobInspectionUp = false
+		s.status.JobInspectionErrorsTotal++
+		return
+	}
+
+	s.status.JobInspectionUp = result.Snapshot != nil && result.Snapshot.JobInspection != nil
+	if s.status.JobInspectionUp {
+		s.status.JobInspectionLastSuccessAt = collectedAt
 	}
 }
 

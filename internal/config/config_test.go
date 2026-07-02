@@ -25,6 +25,9 @@ func TestDefaultConfig(t *testing.T) {
 	if parsed.Runtime.Collector.IncludeUserMetrics {
 		t.Fatal("expected user metrics to be disabled by default")
 	}
+	if parsed.Runtime.Collector.IncludeJobInspectionMetrics {
+		t.Fatal("expected job inspection metrics to be disabled by default")
+	}
 	if len(*parsed.Web.WebListenAddresses) != 1 || (*parsed.Web.WebListenAddresses)[0] != ":9785" {
 		t.Fatalf("unexpected listen addresses: %#v", *parsed.Web.WebListenAddresses)
 	}
@@ -33,7 +36,7 @@ func TestDefaultConfig(t *testing.T) {
 func TestFlagsOverrideDefaults(t *testing.T) {
 	dir := t.TempDir()
 	configPath := filepath.Join(dir, "config.yml")
-	configYAML := []byte("collector:\n  interval: 10m\n  timeout: 45s\npbs:\n  binary_dir: /opt/pbs/bin\nweb:\n  telemetry_path: /from-config\n")
+	configYAML := []byte("collector:\n  interval: 10m\n  timeout: 45s\n  include_job_inspection_metrics: false\npbs:\n  binary_dir: /opt/pbs/bin\nweb:\n  telemetry_path: /from-config\n")
 	if err := os.WriteFile(configPath, configYAML, 0o644); err != nil {
 		t.Fatalf("WriteFile returned error: %v", err)
 	}
@@ -43,6 +46,7 @@ func TestFlagsOverrideDefaults(t *testing.T) {
 		"--collector.interval=30s",
 		"--collector.timeout=5s",
 		"--collector.include-user-metrics",
+		"--collector.include-job-inspection-metrics",
 		"--pbs.binary-dir=/usr/pbs/bin",
 		"--web.telemetry-path=/custom-metrics",
 		"--web.listen-address=:9999",
@@ -60,6 +64,9 @@ func TestFlagsOverrideDefaults(t *testing.T) {
 	}
 	if !parsed.Runtime.Collector.IncludeUserMetrics {
 		t.Fatal("expected include_user_metrics to be enabled")
+	}
+	if !parsed.Runtime.Collector.IncludeJobInspectionMetrics {
+		t.Fatal("expected include_job_inspection_metrics to be enabled")
 	}
 	if parsed.Runtime.PBS.BinaryDir != "/usr/pbs/bin" {
 		t.Fatalf("unexpected binary dir: %q", parsed.Runtime.PBS.BinaryDir)

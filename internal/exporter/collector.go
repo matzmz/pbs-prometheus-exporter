@@ -15,6 +15,7 @@ type Options struct {
 type Collector struct {
 	store              *Store
 	includeUserMetrics bool
+	jobInspection      jobInspectionMetrics
 
 	exporterUpDesc                  *prometheus.Desc
 	collectErrorsTotalDesc          *prometheus.Desc
@@ -64,6 +65,7 @@ func NewCollector(store *Store, options Options) *Collector {
 	return &Collector{
 		store:              store,
 		includeUserMetrics: options.IncludeUserMetrics,
+		jobInspection:      newJobInspectionMetrics(),
 		exporterUpDesc: prometheus.NewDesc(
 			"pbs_exporter_up",
 			"Whether the exporter currently has a valid PBS snapshot.",
@@ -322,6 +324,7 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 		c.serverJobHistoryEnabledDesc,
 		c.serverJobHistoryDurationDesc,
 	}
+	descs = append(descs, c.jobInspection.descriptors()...)
 	for _, desc := range descs {
 		ch <- desc
 	}
@@ -335,6 +338,7 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(c.lastCollectTimestampDesc, prometheus.GaugeValue, unixOrZero(status.LastCollectTimestamp))
 	ch <- prometheus.MustNewConstMetric(c.lastCollectSuccessTimestampDesc, prometheus.GaugeValue, unixOrZero(status.LastCollectSuccessTimestamp))
 	ch <- prometheus.MustNewConstMetric(c.snapshotTimestampDesc, prometheus.GaugeValue, unixOrZero(status.SnapshotTimestamp))
+	c.jobInspection.collectStatus(ch, status)
 
 	snapshot := c.store.Snapshot()
 	if snapshot == nil {
@@ -349,6 +353,7 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	c.collectNodes(ch, snapshot.Nodes)
 	c.collectQueues(ch, snapshot)
 	c.collectServer(ch, snapshot.Server)
+	c.collectJobInspection(ch, snapshot.JobInspection)
 }
 
 func (c *Collector) collectJobs(ch chan<- prometheus.Metric, jobs *pbs.JobData) {

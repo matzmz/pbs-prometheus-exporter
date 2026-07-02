@@ -11,9 +11,11 @@ func TestStoreClearRemovesSnapshot(t *testing.T) {
 	store := NewStore()
 	now := time.Unix(1700000000, 0).UTC()
 
-	store.UpdateSuccess(&pbs.Snapshot{
-		CollectedAt: now,
-		Version:     "2026.1.0",
+	store.UpdateSuccess(&pbs.CollectionResult{
+		Snapshot: &pbs.Snapshot{
+			CollectedAt: now,
+			Version:     "2026.1.0",
+		},
 	}, now, 2*time.Second)
 
 	if store.Snapshot() == nil {

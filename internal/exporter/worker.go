@@ -9,7 +9,7 @@ import (
 )
 
 type SnapshotCollector interface {
-	Collect(ctx context.Context) (*pbs.Snapshot, error)
+	Collect(ctx context.Context) (*pbs.CollectionResult, error)
 }
 
 type Worker struct {
@@ -52,18 +52,22 @@ func (w *Worker) Run(ctx context.Context) {
 
 func (w *Worker) RunOnce(ctx context.Context) error {
 	started := time.Now().UTC()
-	snapshot, err := w.collector.Collect(ctx)
+	result, err := w.collector.Collect(ctx)
 	duration := time.Since(started)
 	if err != nil {
 		w.store.Clear(started, duration, err)
 		return err
 	}
 
+	snapshot := result.Snapshot
 	if snapshot.CollectedAt.IsZero() {
 		snapshot.CollectedAt = started
 	}
 
-	w.store.UpdateSuccess(snapshot, started, duration)
+	w.store.UpdateSuccess(result, started, duration)
+	if result.JobInspectionError != nil {
+		w.logger.Warn("job inspection collection failed", "err", result.JobInspectionError)
+	}
 	return nil
 }
 

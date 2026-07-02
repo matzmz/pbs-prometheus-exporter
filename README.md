@@ -20,6 +20,7 @@ This implementation is a ground-up rewrite inspired by  `[pbs-exporter](https://
 - Background PBS collection with configurable interval and per-command timeout
 - Exporter self-metrics for health, collection timestamps, duration, and errors
 - Optional user-labeled metrics, disabled by default to limit cardinality
+- Optional per-job inspection metrics from `qstat -F json -f`, disabled by default
 - Landing page plus `/-/healthy` and `/-/ready` endpoints
 
 ## Runtime Flags
@@ -30,6 +31,7 @@ This implementation is a ground-up rewrite inspired by  `[pbs-exporter](https://
 - `--collector.interval`: snapshot refresh interval
 - `--collector.timeout`: per-command PBS timeout
 - `--collector.include-user-metrics`: enable user-labeled job metrics
+- `--collector.include-job-inspection-metrics`: enable per-job inspection metrics
 - `--pbs.binary-dir`: directory containing `qstat` and `pbsnodes`
 - `--web.telemetry-path`: metrics endpoint path
 - `--log.level`: log level
@@ -49,6 +51,7 @@ collector:
   interval: 60s
   timeout: 15s
   include_user_metrics: false
+  include_job_inspection_metrics: false
 
 pbs:
   binary_dir: /opt/pbs/bin
@@ -80,8 +83,51 @@ The exporter always exposes self-metrics, including:
 - `pbs_exporter_last_collect_timestamp_seconds`
 - `pbs_exporter_last_collect_success_timestamp_seconds`
 - `pbs_exporter_snapshot_timestamp_seconds`
+- `pbs_exporter_job_inspection_up`
+- `pbs_exporter_job_inspection_errors_total`
+- `pbs_exporter_job_inspection_last_success_timestamp_seconds`
 
 If PBS collection fails, `pbs_exporter_up` becomes `0` and PBS domain metrics disappear from exposition until collection succeeds again.
+
+If job inspection fails while the base PBS snapshot succeeds, aggregate PBS metrics stay available and only the per-job inspection metrics disappear until inspection succeeds again.
+
+## Job Inspection Metrics
+
+When `collector.include_job_inspection_metrics` is enabled, the exporter performs one additional `qstat -F json -f` collection per refresh cycle and exposes per-job metrics with labels:
+
+- `job_id`
+- `queue`
+- `project`
+- `job_owner`
+- `job_state`
+
+Job metadata:
+
+- `pbs_job_info`
+
+Requested resources for all inspected jobs:
+
+- `pbs_job_requested_memory_bytes`
+- `pbs_job_requested_walltime_seconds`
+- `pbs_job_requested_cpu_cores`
+- `pbs_job_requested_gpu_devices`
+- `pbs_job_requested_mpi_processes`
+- `pbs_job_requested_nodes`
+
+Used resources for running jobs only (`job_state = R`):
+
+- `pbs_job_used_cpu_percent`
+- `pbs_job_used_cpu_time_seconds`
+- `pbs_job_used_memory_bytes`
+- `pbs_job_used_virtual_memory_bytes`
+- `pbs_job_used_cpu_cores`
+- `pbs_job_used_gpu_devices`
+- `pbs_job_used_walltime_seconds`
+
+Timing metrics in v1:
+
+- `pbs_job_runtime_seconds` for running jobs, derived from `stime`
+- `pbs_job_queue_wait_seconds` for queued jobs, derived from `qtime`
 
 ## Queue Wait Metrics
 
@@ -165,6 +211,7 @@ It also sets `PATH` to include `/opt/pbs/bin` for PBS CLI installations that liv
 ## Operational Notes
 
 - Prefer keeping `collector.include_user_metrics` disabled unless you specifically need per-user series.
+- Enable `collector.include_job_inspection_metrics` only if per-job cardinality is acceptable for your Prometheus environment.
 - Tune `collector.timeout` low enough to avoid long hangs in PBS CLI calls.
 - Alert on `pbs_exporter_up == 0`.
 - Use `/-/ready` if you want a probe that reflects whether a valid PBS snapshot is currently available.

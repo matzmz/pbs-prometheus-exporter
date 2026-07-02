@@ -15,20 +15,22 @@ import (
 )
 
 type Client struct {
-	binaryDir string
-	timeout   time.Duration
-	logger    *slog.Logger
+	binaryDir            string
+	timeout              time.Duration
+	includeJobInspection bool
+	logger               *slog.Logger
 }
 
 type Snapshot struct {
-	CollectedAt  time.Time
-	Version      string
-	Jobs         *JobData
-	QueueWaits   *QueueWaitData
-	Nodes        *NodeData
-	Queues       *QueueData
-	QueueSummary QueueSummary
-	Server       *ServerData
+	CollectedAt   time.Time
+	Version       string
+	Jobs          *JobData
+	JobInspection *JobInspectionData
+	QueueWaits    *QueueWaitData
+	Nodes         *NodeData
+	Queues        *QueueData
+	QueueSummary  QueueSummary
+	Server        *ServerData
 }
 
 type QueueSummary struct {
@@ -36,18 +38,84 @@ type QueueSummary struct {
 	Queued  int
 }
 
-func NewClient(binaryDir string, timeout time.Duration, logger *slog.Logger) *Client {
+type ClientOptions struct {
+	IncludeJobInspection bool
+}
+
+type CollectionResult struct {
+	Snapshot               *Snapshot
+	JobInspectionAttempted bool
+	JobInspectionError     error
+}
+
+type snapshotOutputs struct {
+	jobs      string
+	jobsFull  string
+	nodes     string
+	queues    string
+	server    string
+}
+
+func NewClient(binaryDir string, timeout time.Duration, options ClientOptions, logger *slog.Logger) *Client {
 	if logger == nil {
 		logger = slog.Default()
 	}
 	return &Client{
-		binaryDir: binaryDir,
-		timeout:   timeout,
-		logger:    logger,
+		binaryDir:            binaryDir,
+		timeout:              timeout,
+		includeJobInspection: options.IncludeJobInspection,
+		logger:               logger,
 	}
 }
 
-func (c *Client) Collect(ctx context.Context) (*Snapshot, error) {
+func (c *Client) Collect(ctx context.Context) (*CollectionResult, error) {
+	outputs, err := c.collectSnapshotOutputs(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	version := c.getVersion(ctx)
+	queueRunning, queueQueued := c.ParseQstatQSummary(outputs.queues)
+	collectedAt := time.Now().UTC()
+
+	snapshot := &Snapshot{
+		CollectedAt: collectedAt,
+		Version:     version,
+		Jobs:        c.ParseQstatOutput(outputs.jobs),
+		QueueWaits:  c.ParseQstatFullQueueWait(outputs.jobsFull, collectedAt),
+		Nodes:       c.ParsePbsnodesOutput(outputs.nodes),
+		Queues:      c.ParseQstatQFull(outputs.queues),
+		QueueSummary: QueueSummary{
+			Running: queueRunning,
+			Queued:  queueQueued,
+		},
+		Server: c.ParseQstatBf(outputs.server),
+	}
+
+	result := &CollectionResult{Snapshot: snapshot}
+	if !c.includeJobInspection {
+		return result, nil
+	}
+
+	result.JobInspectionAttempted = true
+	jobInspectionOutput, err := c.run(ctx, "qstat", "-F", "json", "-f")
+	if err != nil {
+		result.JobInspectionError = err
+		return result, nil
+	}
+
+	jobInspection, err := c.ParseJobInspectionOutput(jobInspectionOutput, collectedAt)
+	if err != nil {
+		result.JobInspectionError = err
+		return result, nil
+	}
+
+	snapshot.JobInspection = jobInspection
+
+	return result, nil
+}
+
+func (c *Client) collectSnapshotOutputs(ctx context.Context) (*snapshotOutputs, error) {
 	jobsOutput, err := c.run(ctx, "qstat", "-t")
 	if err != nil {
 		return nil, err
@@ -73,22 +141,12 @@ func (c *Client) Collect(ctx context.Context) (*Snapshot, error) {
 		return nil, err
 	}
 
-	version := c.getVersion(ctx)
-	queueRunning, queueQueued := c.ParseQstatQSummary(queuesOutput)
-	collectedAt := time.Now().UTC()
-
-	return &Snapshot{
-		CollectedAt: collectedAt,
-		Version:     version,
-		Jobs:        c.ParseQstatOutput(jobsOutput),
-		QueueWaits:  c.ParseQstatFullQueueWait(jobsFullOutput, collectedAt),
-		Nodes:       c.ParsePbsnodesOutput(nodesOutput),
-		Queues:      c.ParseQstatQFull(queuesOutput),
-		QueueSummary: QueueSummary{
-			Running: queueRunning,
-			Queued:  queueQueued,
-		},
-		Server: c.ParseQstatBf(serverOutput),
+	return &snapshotOutputs{
+		jobs:     jobsOutput,
+		jobsFull: jobsFullOutput,
+		nodes:    nodesOutput,
+		queues:   queuesOutput,
+		server:   serverOutput,
 	}, nil
 }
 

@@ -32,7 +32,9 @@ func main() {
 	defer cancel()
 
 	store := exporter.NewStore()
-	client := pbs.NewClient(parsed.Runtime.PBS.BinaryDir, parsed.Runtime.Collector.Timeout, logger)
+	client := pbs.NewClient(parsed.Runtime.PBS.BinaryDir, parsed.Runtime.Collector.Timeout, pbs.ClientOptions{
+		IncludeJobInspection: parsed.Runtime.Collector.IncludeJobInspectionMetrics,
+	}, logger)
 	worker := exporter.NewWorker(client, store, parsed.Runtime.Collector.Interval, logger)
 
 	registry := prometheus.NewRegistry()
@@ -72,6 +74,7 @@ func main() {
 		"collector_interval", parsed.Runtime.Collector.Interval.String(),
 		"collector_timeout", parsed.Runtime.Collector.Timeout.String(),
 		"include_user_metrics", parsed.Runtime.Collector.IncludeUserMetrics,
+		"include_job_inspection_metrics", parsed.Runtime.Collector.IncludeJobInspectionMetrics,
 	)
 
 	if err := toolkitweb.ListenAndServe(server, parsed.Web, logger); err != nil && !errors.Is(err, http.ErrServerClosed) {

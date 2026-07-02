@@ -26,9 +26,10 @@ type WebConfig struct {
 }
 
 type CollectorConfig struct {
-	Interval           time.Duration `yaml:"-"`
-	Timeout            time.Duration `yaml:"-"`
-	IncludeUserMetrics bool          `yaml:"include_user_metrics"`
+	Interval                    time.Duration `yaml:"-"`
+	Timeout                     time.Duration `yaml:"-"`
+	IncludeUserMetrics          bool          `yaml:"include_user_metrics"`
+	IncludeJobInspectionMetrics bool          `yaml:"include_job_inspection_metrics"`
 }
 
 type PBSConfig struct {
@@ -47,9 +48,10 @@ type fileConfig struct {
 		TelemetryPath string `yaml:"telemetry_path"`
 	} `yaml:"web"`
 	Collector struct {
-		Interval           duration `yaml:"interval"`
-		Timeout            duration `yaml:"timeout"`
-		IncludeUserMetrics bool     `yaml:"include_user_metrics"`
+		Interval                    duration `yaml:"interval"`
+		Timeout                     duration `yaml:"timeout"`
+		IncludeUserMetrics          bool     `yaml:"include_user_metrics"`
+		IncludeJobInspectionMetrics bool     `yaml:"include_job_inspection_metrics"`
 	} `yaml:"collector"`
 	PBS struct {
 		BinaryDir string `yaml:"binary_dir"`
@@ -78,9 +80,10 @@ func Default() Config {
 			TelemetryPath: "/metrics",
 		},
 		Collector: CollectorConfig{
-			Interval:           time.Minute,
-			Timeout:            15 * time.Second,
-			IncludeUserMetrics: false,
+			Interval:                    time.Minute,
+			Timeout:                     15 * time.Second,
+			IncludeUserMetrics:          false,
+			IncludeJobInspectionMetrics: false,
 		},
 		PBS: PBSConfig{
 			BinaryDir: "",
@@ -108,6 +111,7 @@ func Parse(args []string) (*Parsed, error) {
 	interval := app.Flag("collector.interval", "How often to refresh the cached PBS snapshot.").Default(cfg.Collector.Interval.String()).Duration()
 	timeout := app.Flag("collector.timeout", "Per-command timeout for PBS CLI invocations.").Default(cfg.Collector.Timeout.String()).Duration()
 	includeUserMetrics := app.Flag("collector.include-user-metrics", "Expose user-labeled job metrics.").Default(strconv.FormatBool(cfg.Collector.IncludeUserMetrics)).Bool()
+	includeJobInspectionMetrics := app.Flag("collector.include-job-inspection-metrics", "Expose per-job inspection metrics from qstat JSON output.").Default(strconv.FormatBool(cfg.Collector.IncludeJobInspectionMetrics)).Bool()
 	binaryDir := app.Flag("pbs.binary-dir", "Directory containing PBS CLI binaries. Empty uses PATH.").Default(cfg.PBS.BinaryDir).String()
 
 	logLevel := promslog.NewLevel()
@@ -129,9 +133,10 @@ func Parse(args []string) (*Parsed, error) {
 				TelemetryPath: *telemetryPath,
 			},
 			Collector: CollectorConfig{
-				Interval:           *interval,
-				Timeout:            *timeout,
-				IncludeUserMetrics: *includeUserMetrics,
+				Interval:                    *interval,
+				Timeout:                     *timeout,
+				IncludeUserMetrics:          *includeUserMetrics,
+				IncludeJobInspectionMetrics: *includeJobInspectionMetrics,
 			},
 			PBS: PBSConfig{
 				BinaryDir: *binaryDir,
@@ -169,6 +174,7 @@ func LoadFile(path string) (Config, error) {
 		cfg.Collector.Timeout = fileCfg.Collector.Timeout.Duration
 	}
 	cfg.Collector.IncludeUserMetrics = fileCfg.Collector.IncludeUserMetrics
+	cfg.Collector.IncludeJobInspectionMetrics = fileCfg.Collector.IncludeJobInspectionMetrics
 	if fileCfg.PBS.BinaryDir != "" {
 		cfg.PBS.BinaryDir = fileCfg.PBS.BinaryDir
 	}

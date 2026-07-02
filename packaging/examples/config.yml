@@ -2,6 +2,7 @@ collector:
   interval: 60s
   timeout: 15s
   include_user_metrics: false
+  include_job_inspection_metrics: false
 
 pbs:
   binary_dir: /opt/pbs/bin
