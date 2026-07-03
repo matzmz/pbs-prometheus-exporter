@@ -203,7 +203,7 @@ func TestCollectorEmitsJobInspectionMetricsFromSnapshot(t *testing.T) {
 							Nodes:           pbs.OptionalFloat64{Value: 1, Set: true},
 						},
 						Used: pbs.UsedJobResources{
-							CPUPercent:         pbs.OptionalFloat64{Value: 210, Set: true},
+							CPUPercent:         pbs.OptionalFloat64{Value: 727, Set: true},
 							CPUTimeSeconds:     pbs.OptionalFloat64{Value: 300, Set: true},
 							MemoryBytes:        pbs.OptionalFloat64{Value: 2048, Set: true},
 							VirtualMemoryBytes: pbs.OptionalFloat64{Value: 8192, Set: true},
@@ -255,7 +255,8 @@ func TestCollectorEmitsJobInspectionMetricsFromSnapshot(t *testing.T) {
 	assertMetricValue(t, metricFamilies, "pbs_exporter_job_inspection_up", nil, 1)
 	assertMetricValue(t, metricFamilies, "pbs_job_info", runningLabels, 1)
 	assertMetricValue(t, metricFamilies, "pbs_job_requested_memory_bytes", runningLabels, 4096)
-	assertMetricValue(t, metricFamilies, "pbs_job_used_cpu_percent", runningLabels, 210)
+	assertMetricValue(t, metricFamilies, "pbs_job_used_cpu_percent", runningLabels, 727)
+	assertMetricValue(t, metricFamilies, "pbs_job_ncpusrealusage", runningLabels, 7.27)
 	assertMetricValue(t, metricFamilies, "pbs_job_runtime_seconds", runningLabels, 600)
 	assertMetricValue(t, metricFamilies, "pbs_job_info", queuedLabels, 1)
 	assertMetricValue(t, metricFamilies, "pbs_job_requested_cpu_cores", queuedLabels, 4)

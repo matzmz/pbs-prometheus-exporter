@@ -20,6 +20,7 @@ type jobInspectionMetrics struct {
 	requestedMPIProcsDesc *prometheus.Desc
 	requestedNodesDesc    *prometheus.Desc
 	usedCPUPercentDesc    *prometheus.Desc
+	ncpusRealUsageDesc    *prometheus.Desc
 	usedCPUTimeDesc       *prometheus.Desc
 	usedMemoryDesc        *prometheus.Desc
 	usedVirtualMemoryDesc *prometheus.Desc
@@ -87,6 +88,11 @@ func newJobInspectionMetrics() jobInspectionMetrics {
 			"Used PBS job CPU percent from the latest successful cached inspection snapshot.",
 			jobInspectionLabelNames, nil,
 		),
+		ncpusRealUsageDesc: prometheus.NewDesc(
+			"pbs_job_ncpusrealusage",
+			"Real CPU core usage derived from PBS resources_used.cpupercent divided by 100.",
+			jobInspectionLabelNames, nil,
+		),
 		usedCPUTimeDesc: prometheus.NewDesc(
 			"pbs_job_used_cpu_time_seconds",
 			"Used PBS job CPU time in seconds from the latest successful cached inspection snapshot.",
@@ -143,6 +149,7 @@ func (m jobInspectionMetrics) descriptors() []*prometheus.Desc {
 		m.requestedMPIProcsDesc,
 		m.requestedNodesDesc,
 		m.usedCPUPercentDesc,
+		m.ncpusRealUsageDesc,
 		m.usedCPUTimeDesc,
 		m.usedMemoryDesc,
 		m.usedVirtualMemoryDesc,
@@ -177,6 +184,7 @@ func (c *Collector) collectJobInspection(ch chan<- prometheus.Metric, inspection
 		emitOptionalMetric(ch, c.jobInspection.requestedNodesDesc, job.Requested.Nodes, labels)
 
 		emitOptionalMetric(ch, c.jobInspection.usedCPUPercentDesc, job.Used.CPUPercent, labels)
+		emitOptionalMetric(ch, c.jobInspection.ncpusRealUsageDesc, ncpusRealUsage(job.Used.CPUPercent), labels)
 		emitOptionalMetric(ch, c.jobInspection.usedCPUTimeDesc, job.Used.CPUTimeSeconds, labels)
 		emitOptionalMetric(ch, c.jobInspection.usedMemoryDesc, job.Used.MemoryBytes, labels)
 		emitOptionalMetric(ch, c.jobInspection.usedVirtualMemoryDesc, job.Used.VirtualMemoryBytes, labels)
@@ -194,6 +202,14 @@ func emitOptionalMetric(ch chan<- prometheus.Metric, desc *prometheus.Desc, valu
 	}
 
 	ch <- prometheus.MustNewConstMetric(desc, prometheus.GaugeValue, value.Value, labels...)
+}
+
+func ncpusRealUsage(cpuPercent pbs.OptionalFloat64) pbs.OptionalFloat64 {
+	if !cpuPercent.Set {
+		return pbs.OptionalFloat64{}
+	}
+
+	return pbs.OptionalFloat64{Value: cpuPercent.Value / 100, Set: true}
 }
 
 func jobInspectionLabelValues(job pbs.InspectedJob) []string {

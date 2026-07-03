@@ -122,6 +122,7 @@ Requested resources for all inspected jobs:
 Used resources for running jobs only (`job_state = R`):
 
 - `pbs_job_used_cpu_percent`
+- `pbs_job_ncpusrealusage` derived from `resources_used.cpupercent / 100`
 - `pbs_job_used_cpu_time_seconds`
 - `pbs_job_used_memory_bytes`
 - `pbs_job_used_virtual_memory_bytes`
