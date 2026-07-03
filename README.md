@@ -28,6 +28,7 @@ This implementation is a ground-up rewrite inspired by  `[pbs-exporter](https://
 
 ### Exporter runtime
 
+- `--version`: print build version information
 - `--config.file`: exporter runtime YAML file
 - `--collector.interval`: snapshot refresh interval
 - `--collector.timeout`: per-command PBS timeout
@@ -177,6 +178,14 @@ To build a static Linux `amd64` binary in Docker:
 ./scripts/build-static.sh
 ```
 
+The build script derives the version from Git:
+
+- exact tag builds use the matching tag such as `0.3.0`
+- non-tagged builds fall back to `git describe --tags --dirty --always`
+- `--version` reports the injected version, revision, branch, build user, and build date
+
+You can override any injected field for CI or packaging with environment variables such as `BUILD_VERSION`, `BUILD_REVISION`, `BUILD_BRANCH`, `BUILD_DATE`, and `BUILD_USER`.
+
 This writes the artifact to:
 
 ```bash
@@ -197,6 +206,12 @@ With config files:
 
 ```bash
 docker run --rm -v "$PWD":/src -w /src golang:1.25 sh -c 'go run . --config.file=packaging/examples/config.yml --web.config.file=packaging/examples/web-config.yml'
+```
+
+To inspect the local development version:
+
+```bash
+docker run --rm -v "$PWD":/src -w /src golang:1.25 sh -c 'go run . --version'
 ```
 
 ## systemd

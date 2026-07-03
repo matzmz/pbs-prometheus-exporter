@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/common/promslog"
 	toolkitweb "github.com/prometheus/exporter-toolkit/web"
 
+	"pbs-exporter/internal/buildinfo"
 	"pbs-exporter/internal/config"
 	"pbs-exporter/internal/exporter"
 	"pbs-exporter/internal/pbs"
@@ -69,6 +70,7 @@ func main() {
 	}()
 
 	logger.Info("starting pbs-exporter",
+		"version", buildinfo.Short(),
 		"listen_addresses", *parsed.Web.WebListenAddresses,
 		"telemetry_path", parsed.Runtime.Web.TelemetryPath,
 		"collector_interval", parsed.Runtime.Collector.Interval.String(),

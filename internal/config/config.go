@@ -9,10 +9,11 @@ import (
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/prometheus/common/promslog"
-	"github.com/prometheus/common/version"
 	toolkitweb "github.com/prometheus/exporter-toolkit/web"
 	toolkitflags "github.com/prometheus/exporter-toolkit/web/kingpinflag"
 	"gopkg.in/yaml.v3"
+
+	"pbs-exporter/internal/buildinfo"
 )
 
 type Config struct {
@@ -104,7 +105,7 @@ func Parse(args []string) (*Parsed, error) {
 
 	app := kingpin.New("pbs-exporter", "Prometheus exporter for PBS clusters.")
 	app.HelpFlag.Short('h')
-	app.Version(version.Print("pbs_exporter"))
+	app.Version(buildinfo.Print("pbs_exporter"))
 
 	flagConfigFile := app.Flag("config.file", "Path to the exporter runtime configuration file.").Default(configFile).String()
 	telemetryPath := app.Flag("web.telemetry-path", "Path under which to expose metrics.").Default(cfg.Web.TelemetryPath).String()
