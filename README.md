@@ -79,6 +79,7 @@ The web config format comes from `exporter-toolkit` and is the supported way to 
 
 The exporter always exposes self-metrics, including:
 
+- `pbs_exporter_build_info`
 - `pbs_exporter_up`
 - `pbs_exporter_collect_errors_total`
 - `pbs_exporter_last_collect_duration_seconds`

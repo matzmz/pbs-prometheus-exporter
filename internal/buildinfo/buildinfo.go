@@ -29,3 +29,14 @@ func Print(program string) string {
 func Short() string {
 	return Version
 }
+
+func RevisionValue() string {
+	return version.GetRevision()
+}
+
+func BranchValue() string {
+	if Branch == "" {
+		return "unknown"
+	}
+	return Branch
+}

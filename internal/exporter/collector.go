@@ -5,6 +5,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"pbs-exporter/internal/buildinfo"
 	"pbs-exporter/internal/pbs"
 )
 
@@ -17,6 +18,7 @@ type Collector struct {
 	includeUserMetrics bool
 	jobInspection      jobInspectionMetrics
 
+	exporterBuildInfoDesc           *prometheus.Desc
 	exporterUpDesc                  *prometheus.Desc
 	collectErrorsTotalDesc          *prometheus.Desc
 	lastCollectDurationDesc         *prometheus.Desc
@@ -66,6 +68,11 @@ func NewCollector(store *Store, options Options) *Collector {
 		store:              store,
 		includeUserMetrics: options.IncludeUserMetrics,
 		jobInspection:      newJobInspectionMetrics(),
+		exporterBuildInfoDesc: prometheus.NewDesc(
+			"pbs_exporter_build_info",
+			"Build information for this pbs-exporter instance.",
+			[]string{"version", "revision", "branch"}, nil,
+		),
 		exporterUpDesc: prometheus.NewDesc(
 			"pbs_exporter_up",
 			"Whether the exporter currently has a valid PBS snapshot.",
@@ -281,6 +288,7 @@ func NewCollector(store *Store, options Options) *Collector {
 
 func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 	descs := []*prometheus.Desc{
+		c.exporterBuildInfoDesc,
 		c.exporterUpDesc,
 		c.collectErrorsTotalDesc,
 		c.lastCollectDurationDesc,
@@ -332,6 +340,14 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	status := c.store.Status()
+	ch <- prometheus.MustNewConstMetric(
+		c.exporterBuildInfoDesc,
+		prometheus.GaugeValue,
+		1,
+		buildinfo.Short(),
+		buildinfo.RevisionValue(),
+		buildinfo.BranchValue(),
+	)
 	ch <- prometheus.MustNewConstMetric(c.exporterUpDesc, prometheus.GaugeValue, boolFloat(status.Up))
 	ch <- prometheus.MustNewConstMetric(c.collectErrorsTotalDesc, prometheus.CounterValue, float64(status.CollectErrorsTotal))
 	ch <- prometheus.MustNewConstMetric(c.lastCollectDurationDesc, prometheus.GaugeValue, status.LastCollectDuration.Seconds())

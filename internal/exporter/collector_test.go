@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 
+	"pbs-exporter/internal/buildinfo"
 	"pbs-exporter/internal/pbs"
 )
 
@@ -23,6 +24,11 @@ func TestCollectorEmitsExporterMetricsWithoutSnapshot(t *testing.T) {
 		t.Fatalf("Gather returned error: %v", err)
 	}
 
+	assertMetricValue(t, metricFamilies, "pbs_exporter_build_info", map[string]string{
+		"version":  buildinfo.Short(),
+		"revision": buildinfo.RevisionValue(),
+		"branch":   buildinfo.BranchValue(),
+	}, 1)
 	assertMetricValue(t, metricFamilies, "pbs_exporter_collect_errors_total", nil, 0)
 	assertMetricValue(t, metricFamilies, "pbs_exporter_up", nil, 0)
 	assertMetricValue(t, metricFamilies, "pbs_exporter_job_inspection_up", nil, 0)
@@ -232,18 +238,18 @@ func TestCollectorEmitsJobInspectionMetricsFromSnapshot(t *testing.T) {
 	}
 
 	runningLabels := map[string]string{
-		"job_id":     "100.server",
-		"queue":      "workq",
-		"project":    "astro",
-		"job_owner":  "alice@submit01",
-		"job_state":  "R",
+		"job_id":    "100.server",
+		"queue":     "workq",
+		"project":   "astro",
+		"job_owner": "alice@submit01",
+		"job_state": "R",
 	}
 	queuedLabels := map[string]string{
-		"job_id":     "101.server",
-		"queue":      "gpuq",
-		"project":    "",
-		"job_owner":  "bob@submit02",
-		"job_state":  "Q",
+		"job_id":    "101.server",
+		"queue":     "gpuq",
+		"project":   "",
+		"job_owner": "bob@submit02",
+		"job_state": "Q",
 	}
 
 	assertMetricValue(t, metricFamilies, "pbs_exporter_job_inspection_up", nil, 1)

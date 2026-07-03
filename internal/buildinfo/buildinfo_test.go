@@ -55,3 +55,33 @@ func TestPrintIncludesBuildMetadata(t *testing.T) {
 		}
 	}
 }
+
+func TestRevisionValueFallsBackToUnknown(t *testing.T) {
+	originalRevision := Revision
+	t.Cleanup(func() {
+		Revision = originalRevision
+		apply()
+	})
+
+	Revision = ""
+	apply()
+
+	if got := RevisionValue(); got == "" {
+		t.Fatal("RevisionValue() returned empty string")
+	}
+}
+
+func TestBranchValueFallsBackToUnknown(t *testing.T) {
+	originalBranch := Branch
+	t.Cleanup(func() {
+		Branch = originalBranch
+		apply()
+	})
+
+	Branch = ""
+	apply()
+
+	if got := BranchValue(); got != "unknown" {
+		t.Fatalf("BranchValue() = %q, want %q", got, "unknown")
+	}
+}
