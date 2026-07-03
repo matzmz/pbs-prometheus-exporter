@@ -1,13 +1,30 @@
 package buildinfo
 
-import "github.com/prometheus/common/version"
+import (
+	"runtime/debug"
+
+	"github.com/prometheus/common/version"
+)
+
+const (
+	defaultVersion   = "dev"
+	defaultBuildUser = "matzmz"
+	unknownValue     = "unknown"
+)
+
+type vcsMetadata struct {
+	mainVersion string
+	commitTime  string
+}
+
+var metadata = readVCSMetadata()
 
 var (
-	Version   = "dev"
+	Version   = defaultVersion
 	Revision  = ""
 	Branch    = ""
-	BuildUser = "unknown"
-	BuildDate = "unknown"
+	BuildUser = defaultBuildUser
+	BuildDate = ""
 )
 
 func init() {
@@ -15,11 +32,11 @@ func init() {
 }
 
 func apply() {
-	version.Version = Version
+	version.Version = VersionValue()
 	version.Revision = Revision
-	version.Branch = Branch
-	version.BuildUser = BuildUser
-	version.BuildDate = BuildDate
+	version.Branch = BranchValue()
+	version.BuildUser = BuildUserValue()
+	version.BuildDate = BuildDateValue()
 }
 
 func Print(program string) string {
@@ -27,7 +44,20 @@ func Print(program string) string {
 }
 
 func Short() string {
-	return Version
+	return VersionValue()
+}
+
+func VersionValue() string {
+	if Version != "" && Version != defaultVersion {
+		return Version
+	}
+	if metadata.mainVersion != "" {
+		return metadata.mainVersion
+	}
+	if Version != "" {
+		return Version
+	}
+	return defaultVersion
 }
 
 func RevisionValue() string {
@@ -36,7 +66,44 @@ func RevisionValue() string {
 
 func BranchValue() string {
 	if Branch == "" {
-		return "unknown"
+		return unknownValue
 	}
 	return Branch
+}
+
+func BuildUserValue() string {
+	if BuildUser == "" || BuildUser == unknownValue {
+		return defaultBuildUser
+	}
+	return BuildUser
+}
+
+func BuildDateValue() string {
+	if BuildDate != "" && BuildDate != unknownValue {
+		return BuildDate
+	}
+	if metadata.commitTime != "" {
+		return metadata.commitTime
+	}
+	return unknownValue
+}
+
+func readVCSMetadata() vcsMetadata {
+	buildInfo, ok := debug.ReadBuildInfo()
+	if !ok {
+		return vcsMetadata{}
+	}
+
+	meta := vcsMetadata{}
+	if buildInfo.Main.Version != "" && buildInfo.Main.Version != "(devel)" {
+		meta.mainVersion = buildInfo.Main.Version
+	}
+
+	for _, setting := range buildInfo.Settings {
+		if setting.Key == "vcs.time" {
+			meta.commitTime = setting.Value
+		}
+	}
+
+	return meta
 }

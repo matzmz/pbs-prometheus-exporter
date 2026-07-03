@@ -187,6 +187,16 @@ The build script derives the version from Git:
 
 You can override any injected field for CI or packaging with environment variables such as `BUILD_VERSION`, `BUILD_REVISION`, `BUILD_BRANCH`, `BUILD_DATE`, and `BUILD_USER`.
 
+If your CI builds with plain `go build` instead of `./scripts/build-static.sh`, use:
+
+```bash
+go build -ldflags "$(./scripts/ldflags.sh)" -o dist/pbs-exporter .
+```
+
+`scripts/version.sh` also honors common CI tag variables such as `CI_COMMIT_TAG`, `DRONE_TAG`, and `GITHUB_REF_NAME` when `GITHUB_REF_TYPE=tag`.
+
+`scripts/ldflags.sh` also consumes common CI variables for revision and branch, including `CI_COMMIT_SHA`, `CI_COMMIT_REF_NAME`, `GITHUB_SHA`, `GITHUB_REF_NAME`, `GITHUB_HEAD_REF`, `DRONE_COMMIT_SHA`, and `DRONE_BRANCH`.
+
 This writes the artifact to:
 
 ```bash

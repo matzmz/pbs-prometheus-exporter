@@ -10,7 +10,10 @@ func TestShortUsesVersionVariable(t *testing.T) {
 	Version = "1.2.3"
 	t.Cleanup(func() {
 		Version = originalVersion
+		apply()
 	})
+
+	apply()
 
 	if got := Short(); got != "1.2.3" {
 		t.Fatalf("Short() = %q, want %q", got, "1.2.3")
@@ -83,5 +86,35 @@ func TestBranchValueFallsBackToUnknown(t *testing.T) {
 
 	if got := BranchValue(); got != "unknown" {
 		t.Fatalf("BranchValue() = %q, want %q", got, "unknown")
+	}
+}
+
+func TestBuildUserValueFallsBackToRepoOwner(t *testing.T) {
+	originalBuildUser := BuildUser
+	t.Cleanup(func() {
+		BuildUser = originalBuildUser
+		apply()
+	})
+
+	BuildUser = "unknown"
+	apply()
+
+	if got := BuildUserValue(); got != "matzmz" {
+		t.Fatalf("BuildUserValue() = %q, want %q", got, "matzmz")
+	}
+}
+
+func TestBuildDateValueUsesExplicitBuildDate(t *testing.T) {
+	originalBuildDate := BuildDate
+	t.Cleanup(func() {
+		BuildDate = originalBuildDate
+		apply()
+	})
+
+	BuildDate = "2026-07-03T08:00:00Z"
+	apply()
+
+	if got := BuildDateValue(); got != "2026-07-03T08:00:00Z" {
+		t.Fatalf("BuildDateValue() = %q, want %q", got, "2026-07-03T08:00:00Z")
 	}
 }
