@@ -9,25 +9,25 @@ import (
 var jobInspectionLabelNames = []string{"job_id", "queue", "project", "job_owner", "job_state"}
 
 type jobInspectionMetrics struct {
-	upDesc                 *prometheus.Desc
-	errorsTotalDesc        *prometheus.Desc
-	lastSuccessTimestamp   *prometheus.Desc
-	infoDesc               *prometheus.Desc
-	requestedMemoryDesc    *prometheus.Desc
-	requestedWalltimeDesc  *prometheus.Desc
-	requestedCPUDesc       *prometheus.Desc
-	requestedGPUDesc       *prometheus.Desc
-	requestedMPIProcsDesc  *prometheus.Desc
-	requestedNodesDesc     *prometheus.Desc
-	usedCPUPercentDesc     *prometheus.Desc
-	usedCPUTimeDesc        *prometheus.Desc
-	usedMemoryDesc         *prometheus.Desc
-	usedVirtualMemoryDesc  *prometheus.Desc
-	usedCPUDesc            *prometheus.Desc
-	usedGPUDesc            *prometheus.Desc
-	usedWalltimeDesc       *prometheus.Desc
-	runtimeDesc            *prometheus.Desc
-	queueWaitDesc          *prometheus.Desc
+	upDesc                *prometheus.Desc
+	errorsTotalDesc       *prometheus.Desc
+	lastSuccessTimestamp  *prometheus.Desc
+	infoDesc              *prometheus.Desc
+	requestedMemoryDesc   *prometheus.Desc
+	requestedWalltimeDesc *prometheus.Desc
+	requestedCPUDesc      *prometheus.Desc
+	requestedGPUDesc      *prometheus.Desc
+	requestedMPIProcsDesc *prometheus.Desc
+	requestedNodesDesc    *prometheus.Desc
+	usedCPUPercentDesc    *prometheus.Desc
+	usedCPUTimeDesc       *prometheus.Desc
+	usedMemoryDesc        *prometheus.Desc
+	usedVirtualMemoryDesc *prometheus.Desc
+	usedCPUDesc           *prometheus.Desc
+	usedGPUDesc           *prometheus.Desc
+	usedWalltimeDesc      *prometheus.Desc
+	runtimeDesc           *prometheus.Desc
+	queueWaitDesc         *prometheus.Desc
 }
 
 func newJobInspectionMetrics() jobInspectionMetrics {
@@ -198,10 +198,10 @@ func emitOptionalMetric(ch chan<- prometheus.Metric, desc *prometheus.Desc, valu
 
 func jobInspectionLabelValues(job pbs.InspectedJob) []string {
 	return []string{
-		job.JobID,
+		pbs.NormalizeJobID(job.JobID),
 		job.Queue,
 		job.Project,
-		job.JobOwner,
+		pbs.NormalizeJobOwner(job.JobOwner),
 		job.JobState,
 	}
 }

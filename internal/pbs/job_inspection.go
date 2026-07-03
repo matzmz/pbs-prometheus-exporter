@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 )
+
+var jobIDNumberPattern = regexp.MustCompile(`[0-9]+`)
 
 type JobInspectionData struct {
 	Jobs []InspectedJob
@@ -209,10 +212,10 @@ func parseJobInspectionJSON(output string, collectedAt time.Time) (*JobInspectio
 	for _, jobID := range jobIDs {
 		record := payload.Jobs[jobID]
 		job := InspectedJob{
-			JobID:    jobID,
+			JobID:    NormalizeJobID(jobID),
 			Queue:    record.Queue,
 			Project:  record.Project,
-			JobOwner: record.JobOwner,
+			JobOwner: NormalizeJobOwner(record.JobOwner),
 			JobState: record.JobState,
 			Requested: RequestedJobResources{
 				MemoryBytes:     record.ResourceList.Mem.optionalBytes(),
@@ -245,6 +248,23 @@ func parseJobInspectionJSON(output string, collectedAt time.Time) (*JobInspectio
 	}
 
 	return data, nil
+}
+
+func NormalizeJobID(rawJobID string) string {
+	jobID := strings.TrimSpace(rawJobID)
+	if numericJobID := jobIDNumberPattern.FindString(jobID); numericJobID != "" {
+		return numericJobID
+	}
+	return jobID
+}
+
+func NormalizeJobOwner(rawOwner string) string {
+	owner := strings.TrimSpace(rawOwner)
+	separator := strings.LastIndex(owner, "@")
+	if separator <= 0 {
+		return owner
+	}
+	return owner[:separator]
 }
 
 func optionalElapsedSeconds(rawTimestamp string, collectedAt time.Time) OptionalFloat64 {

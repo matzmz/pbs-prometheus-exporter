@@ -290,10 +290,10 @@ func TestParseJobInspectionOutputParsesTypedMetrics(t *testing.T) {
 
 	data, err := parseJobInspectionJSON(`{
   "Jobs": {
-    "100.server": {
+    "100.server01": {
       "queue": "workq",
       "project": "astro",
-      "Job_Owner": "alice@submit01",
+      "Job_Owner": "alice@lab@submit01",
       "job_state": "R",
       "stime": "Thu Jul  2 09:00:00 2026",
       "Resource_List": {
@@ -342,13 +342,13 @@ func TestParseJobInspectionOutputParsesTypedMetrics(t *testing.T) {
 	}
 
 	runningJob := data.Jobs[0]
-	if runningJob.JobID != "100.server" {
+	if runningJob.JobID != "100" {
 		t.Fatalf("unexpected running job id: %q", runningJob.JobID)
 	}
 	if runningJob.Project != "astro" {
 		t.Fatalf("unexpected project: %q", runningJob.Project)
 	}
-	if runningJob.JobOwner != "alice@submit01" {
+	if runningJob.JobOwner != "alice@lab" {
 		t.Fatalf("unexpected job owner: %q", runningJob.JobOwner)
 	}
 	if !runningJob.Requested.MemoryBytes.Set || runningJob.Requested.MemoryBytes.Value != 4*1024*1024*1024 {
@@ -368,6 +368,12 @@ func TestParseJobInspectionOutputParsesTypedMetrics(t *testing.T) {
 	if queuedJob.Project != "" {
 		t.Fatalf("expected empty project, got %q", queuedJob.Project)
 	}
+	if queuedJob.JobID != "101" {
+		t.Fatalf("unexpected queued job id: %q", queuedJob.JobID)
+	}
+	if queuedJob.JobOwner != "bob" {
+		t.Fatalf("unexpected queued job owner: %q", queuedJob.JobOwner)
+	}
 	if queuedJob.Requested.MemoryBytes.Set {
 		t.Fatalf("expected malformed requested memory to be skipped, got %+v", queuedJob.Requested.MemoryBytes)
 	}
@@ -382,5 +388,48 @@ func TestParseJobInspectionOutputParsesTypedMetrics(t *testing.T) {
 	}
 	if !queuedJob.QueueWaitSeconds.Set || queuedJob.QueueWaitSeconds.Value != 5400 {
 		t.Fatalf("unexpected queue wait: %+v", queuedJob.QueueWaitSeconds)
+	}
+}
+
+func TestNormalizeJobInspectionLabels(t *testing.T) {
+	tests := []struct {
+		name      string
+		jobID     string
+		jobOwner  string
+		wantID    string
+		wantOwner string
+	}{
+		{
+			name:      "pbs server suffix",
+			jobID:     "12345.server01",
+			jobOwner:  "foo@hostname",
+			wantID:    "12345",
+			wantOwner: "foo",
+		},
+		{
+			name:      "owner containing at sign",
+			jobID:     "  9876.server  ",
+			jobOwner:  "foo@bar@hostname",
+			wantID:    "9876",
+			wantOwner: "foo@bar",
+		},
+		{
+			name:      "fallbacks preserve unparseable values",
+			jobID:     "interactive",
+			jobOwner:  "service",
+			wantID:    "interactive",
+			wantOwner: "service",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := NormalizeJobID(test.jobID); got != test.wantID {
+				t.Fatalf("NormalizeJobID(%q) = %q, want %q", test.jobID, got, test.wantID)
+			}
+			if got := NormalizeJobOwner(test.jobOwner); got != test.wantOwner {
+				t.Fatalf("NormalizeJobOwner(%q) = %q, want %q", test.jobOwner, got, test.wantOwner)
+			}
+		})
 	}
 }

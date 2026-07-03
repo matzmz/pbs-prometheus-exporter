@@ -189,10 +189,10 @@ func TestCollectorEmitsJobInspectionMetricsFromSnapshot(t *testing.T) {
 			JobInspection: &pbs.JobInspectionData{
 				Jobs: []pbs.InspectedJob{
 					{
-						JobID:    "100.server",
+						JobID:    "100.server01",
 						Queue:    "workq",
 						Project:  "astro",
-						JobOwner: "alice@submit01",
+						JobOwner: "alice@lab@submit01",
 						JobState: "R",
 						Requested: pbs.RequestedJobResources{
 							MemoryBytes:     pbs.OptionalFloat64{Value: 4096, Set: true},
@@ -238,17 +238,17 @@ func TestCollectorEmitsJobInspectionMetricsFromSnapshot(t *testing.T) {
 	}
 
 	runningLabels := map[string]string{
-		"job_id":    "100.server",
+		"job_id":    "100",
 		"queue":     "workq",
 		"project":   "astro",
-		"job_owner": "alice@submit01",
+		"job_owner": "alice@lab",
 		"job_state": "R",
 	}
 	queuedLabels := map[string]string{
-		"job_id":    "101.server",
+		"job_id":    "101",
 		"queue":     "gpuq",
 		"project":   "",
-		"job_owner": "bob@submit02",
+		"job_owner": "bob",
 		"job_state": "Q",
 	}
 
@@ -290,10 +290,10 @@ func TestCollectorKeepsBaseMetricsWhenJobInspectionFails(t *testing.T) {
 	assertMetricValue(t, metricFamilies, "pbs_exporter_job_inspection_up", nil, 0)
 	assertMetricValue(t, metricFamilies, "pbs_exporter_job_inspection_errors_total", nil, 1)
 	assertMetricMissing(t, metricFamilies, "pbs_job_info", map[string]string{
-		"job_id":    "100.server",
+		"job_id":    "100",
 		"queue":     "workq",
 		"project":   "astro",
-		"job_owner": "alice@submit01",
+		"job_owner": "alice",
 		"job_state": "R",
 	})
 }

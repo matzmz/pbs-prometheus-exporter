@@ -104,6 +104,8 @@ When `collector.include_job_inspection_metrics` is enabled, the exporter perform
 - `job_owner`
 - `job_state`
 
+`job_id` is normalized to the numeric PBS job id. `job_owner` drops the submission host suffix after the last `@`, so `foo@host` becomes `foo` and `foo@bar@host` becomes `foo@bar`.
+
 Job metadata:
 
 - `pbs_job_info`
