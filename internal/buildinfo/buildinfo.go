@@ -14,6 +14,7 @@ const (
 
 type vcsMetadata struct {
 	mainVersion string
+	revision    string
 	commitTime  string
 }
 
@@ -33,7 +34,7 @@ func init() {
 
 func apply() {
 	version.Version = VersionValue()
-	version.Revision = Revision
+	version.Revision = RevisionValue()
 	version.Branch = BranchValue()
 	version.BuildUser = BuildUserValue()
 	version.BuildDate = BuildDateValue()
@@ -61,6 +62,12 @@ func VersionValue() string {
 }
 
 func RevisionValue() string {
+	if Revision != "" {
+		return Revision
+	}
+	if metadata.revision != "" {
+		return metadata.revision
+	}
 	return version.GetRevision()
 }
 
@@ -100,7 +107,10 @@ func readVCSMetadata() vcsMetadata {
 	}
 
 	for _, setting := range buildInfo.Settings {
-		if setting.Key == "vcs.time" {
+		switch setting.Key {
+		case "vcs.revision":
+			meta.revision = setting.Value
+		case "vcs.time":
 			meta.commitTime = setting.Value
 		}
 	}

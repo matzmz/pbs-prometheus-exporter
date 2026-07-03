@@ -8,7 +8,8 @@ OUTPUT_DIR=${OUTPUT_DIR:-"$ROOT_DIR/dist"}
 BINARY_NAME=${BINARY_NAME:-pbs-exporter-linux-amd64}
 GO_BUILDER_IMAGE=${GO_BUILDER_IMAGE:-golang:1.25}
 CONTAINER_OUTPUT_DIR=/out
-LDFLAGS=${LDFLAGS:-"$("$SCRIPT_DIR/ldflags.sh")"}
+LDFLAGS="$("$SCRIPT_DIR/ldflags.sh") ${EXTRA_LDFLAGS:-}"
+OUTPUT_BINARY="$OUTPUT_DIR/$BINARY_NAME"
 
 mkdir -p "$OUTPUT_DIR"
 
@@ -25,3 +26,5 @@ docker run --rm \
   -e LDFLAGS="$LDFLAGS" \
   "$GO_BUILDER_IMAGE" \
   sh -c "go mod download && go build -trimpath -ldflags \"\$LDFLAGS\" -o \"$CONTAINER_OUTPUT_DIR/$BINARY_NAME\" ."
+
+"$SCRIPT_DIR/verify-buildinfo.sh" "$OUTPUT_BINARY"

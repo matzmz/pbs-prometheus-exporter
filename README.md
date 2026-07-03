@@ -185,12 +185,18 @@ The build script derives the version from Git:
 - non-tagged builds fall back to `git describe --tags --dirty --always`
 - `--version` reports the injected version, revision, branch, build user, and build date
 
-You can override any injected field for CI or packaging with environment variables such as `BUILD_VERSION`, `BUILD_REVISION`, `BUILD_BRANCH`, `BUILD_DATE`, and `BUILD_USER`.
+You can override any injected field for CI or packaging with environment variables such as `BUILD_VERSION`, `BUILD_REVISION`, `BUILD_BRANCH`, `BUILD_DATE`, and `BUILD_USER`. Use `EXTRA_LDFLAGS` for additional linker flags; `./scripts/build-static.sh` always adds the build metadata flags itself.
 
 If your CI builds with plain `go build` instead of `./scripts/build-static.sh`, use:
 
 ```bash
 go build -ldflags "$(./scripts/ldflags.sh)" -o dist/pbs-exporter .
+```
+
+Then validate the artifact with:
+
+```bash
+./scripts/verify-buildinfo.sh dist/pbs-exporter
 ```
 
 `scripts/version.sh` also honors common CI tag variables such as `CI_COMMIT_TAG`, `DRONE_TAG`, and `GITHUB_REF_NAME` when `GITHUB_REF_TYPE=tag`.

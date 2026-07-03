@@ -26,12 +26,14 @@ fi
 if [ -z "$BUILD_BRANCH" ]; then
   if [ -n "${CI_COMMIT_REF_NAME:-}" ]; then
     BUILD_BRANCH=$CI_COMMIT_REF_NAME
-  elif [ "${GITHUB_REF_TYPE:-}" = "branch" ] && [ -n "${GITHUB_REF_NAME:-}" ]; then
+  elif [ -n "${GITHUB_REF_NAME:-}" ]; then
     BUILD_BRANCH=$GITHUB_REF_NAME
   elif [ -n "${GITHUB_HEAD_REF:-}" ]; then
     BUILD_BRANCH=$GITHUB_HEAD_REF
   elif [ -n "${DRONE_BRANCH:-}" ]; then
     BUILD_BRANCH=$DRONE_BRANCH
+  elif [ -n "${DRONE_TAG:-}" ]; then
+    BUILD_BRANCH=$DRONE_TAG
   else
     BUILD_BRANCH=$(git -C "$ROOT_DIR" symbolic-ref --short -q HEAD 2>/dev/null || printf 'unknown')
   fi
