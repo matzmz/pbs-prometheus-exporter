@@ -29,7 +29,9 @@ jobs:
       - name: Build static release binary
         run: |
           mkdir -p dist
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -buildvcs=false -ldflags='-s -w' -o dist/pbs-exporter-linux-amd64 .
+          LDFLAGS="$(./scripts/ldflags.sh)"
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$LDFLAGS" -o dist/pbs-exporter-linux-amd64 .
+          ./scripts/verify-buildinfo.sh dist/pbs-exporter-linux-amd64
 
       - name: Prepare release assets
         run: |
