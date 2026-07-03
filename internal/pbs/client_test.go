@@ -1,6 +1,7 @@
 package pbs
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 )
@@ -275,6 +276,82 @@ func TestParseNodesJSONBuildsNodeData(t *testing.T) {
 	node02 := nodes.Nodes["node02"]
 	if node02.State != "job-busy" || node02.Jobs != 1 {
 		t.Fatalf("unexpected node02 state: %+v", node02)
+	}
+}
+
+func TestParseNodesJSONHandlesPBSNodesSummaryJSON(t *testing.T) {
+	var payload nodesJSONPayload
+	if err := json.Unmarshal([]byte(`{
+  "nodes": {
+    "gnode02": {
+      "State": "free",
+      "Total Jobs": 2,
+      "Running Jobs": 2,
+      "Suspended Jobs": "",
+      "mem f/t": "153gb/187gb",
+      "ncpus f/t": "4/24",
+      "nmics f/t": "0/0",
+      "ngpus f/t": "2/2",
+      "jobs": ["812001.cluster01", "812002.cluster01"]
+    },
+    "anode02": {
+      "State": "<various>",
+      "Total Jobs": 6,
+      "Running Jobs": 6,
+      "Suspended Jobs": "",
+      "mem f/t": "2gb/502gb",
+      "ncpus f/t": "16/64",
+      "nmics f/t": "0/0",
+      "ngpus f/t": "0/4",
+      "jobs": ["812003.cluster01"]
+    },
+    "cnode03": {
+      "State": "<various>",
+      "Total Jobs": "\t",
+      "Running Jobs": "\t",
+      "mem f/t": "496gb/503gb",
+      "ncpus f/t": "0/24",
+      "ngpus f/t": "0/0",
+      "jobs": ["812004.cluster01", "812005.cluster01"]
+    }
+  }
+}`), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+
+	nodes := parseNodesJSON(&payload)
+
+	gnode := nodes.Nodes["gnode02"]
+	if gnode.State != "free" || gnode.Jobs != 2 {
+		t.Fatalf("unexpected gnode02 state/jobs: %+v", gnode)
+	}
+	if gnode.CPUsAvailable != 4 || gnode.CPUsTotal != 24 {
+		t.Fatalf("unexpected gnode02 cpu data: %+v", gnode)
+	}
+	if gnode.GPUsAvailable != 2 || gnode.GPUsTotal != 2 {
+		t.Fatalf("unexpected gnode02 gpu data: %+v", gnode)
+	}
+	if gnode.MemoryAvailable != 153*1024*1024*1024 || gnode.MemoryTotal != 187*1024*1024*1024 {
+		t.Fatalf("unexpected gnode02 memory data: %+v", gnode)
+	}
+
+	anode := nodes.Nodes["anode02"]
+	if anode.State != "job-busy" || anode.Jobs != 6 {
+		t.Fatalf("unexpected anode02 state/jobs: %+v", anode)
+	}
+	if anode.CPUsAvailable != 16 || anode.CPUsTotal != 64 {
+		t.Fatalf("unexpected anode02 cpu data: %+v", anode)
+	}
+	if anode.GPUsAvailable != 0 || anode.GPUsTotal != 4 {
+		t.Fatalf("unexpected anode02 gpu data: %+v", anode)
+	}
+	if anode.MemoryAvailable != 2*1024*1024*1024 || anode.MemoryTotal != 502*1024*1024*1024 {
+		t.Fatalf("unexpected anode02 memory data: %+v", anode)
+	}
+
+	cnode := nodes.Nodes["cnode03"]
+	if cnode.Jobs != 2 {
+		t.Fatalf("unexpected cnode03 fallback job count: %+v", cnode)
 	}
 }
 

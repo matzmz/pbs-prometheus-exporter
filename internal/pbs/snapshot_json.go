@@ -61,12 +61,19 @@ type nodesJSONPayload struct {
 }
 
 type nodeJSONRecord struct {
-	State    string     `json:"state"`
-	Jobs     jsonScalar `json:"jobs"`
-	JobCount jsonScalar `json:"njobs"`
-	Memory   jsonScalar `json:"mem"`
-	CPUs     jsonScalar `json:"ncpus"`
-	GPUs     jsonScalar `json:"ngpus"`
+	State          string     `json:"state"`
+	StateSummary   string     `json:"State"`
+	Jobs           jsonScalar `json:"jobs"`
+	JobsList       []string   `json:"-"`
+	JobCount       jsonScalar `json:"njobs"`
+	TotalJobs      jsonScalar `json:"Total Jobs"`
+	RunningJobs    jsonScalar `json:"Running Jobs"`
+	Memory         jsonScalar `json:"mem"`
+	MemoryFraction jsonScalar `json:"mem f/t"`
+	CPUs           jsonScalar `json:"ncpus"`
+	CPUsFraction   jsonScalar `json:"ncpus f/t"`
+	GPUs           jsonScalar `json:"ngpus"`
+	GPUsFraction   jsonScalar `json:"ngpus f/t"`
 }
 
 func (c *Client) collectJSON(ctx context.Context, target any, name string, args ...string) error {
@@ -202,11 +209,12 @@ func parseNodesJSON(payload *nodesJSONPayload) *NodeData {
 
 	for _, nodeName := range sortedNodeNames(payload.records()) {
 		record := payload.records()[nodeName]
-		if record.State == "state-unknown" {
+		state := firstText(record.State, record.StateSummary)
+		if state == "state-unknown" {
 			continue
 		}
 
-		normalizedState := normalizeNodeState(record.State)
+		normalizedState := normalizeNodeState(state)
 		switch normalizedState {
 		case "free":
 			data.CountFree++
@@ -218,13 +226,13 @@ func parseNodesJSON(payload *nodesJSONPayload) *NodeData {
 			data.CountDown++
 		}
 
-		availableMemory, totalMemory := parseFractionalMemory(record.Memory.textValue())
-		availableCPUs, totalCPUs := parseFraction(record.CPUs.textValue())
-		availableGPUs, totalGPUs := parseFraction(record.GPUs.textValue())
+		availableMemory, totalMemory := parseFractionalMemory(firstScalarText(record.Memory, record.MemoryFraction))
+		availableCPUs, totalCPUs := parseFraction(firstScalarText(record.CPUs, record.CPUsFraction))
+		availableGPUs, totalGPUs := parseFraction(firstScalarText(record.GPUs, record.GPUsFraction))
 
-		jobCount := record.Jobs.intValue()
+		jobCount := firstPositiveInt(record.Jobs, record.JobCount, record.TotalJobs, record.RunningJobs)
 		if jobCount == 0 {
-			jobCount = record.JobCount.intValue()
+			jobCount = len(record.JobsList)
 		}
 
 		data.Nodes[nodeName] = NodeInfo{
@@ -240,6 +248,20 @@ func parseNodesJSON(payload *nodesJSONPayload) *NodeData {
 	}
 
 	return data
+}
+
+func (r *nodeJSONRecord) UnmarshalJSON(data []byte) error {
+	type alias nodeJSONRecord
+	var raw struct {
+		alias
+		Jobs []string `json:"jobs"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	*r = nodeJSONRecord(raw.alias)
+	r.JobsList = raw.Jobs
+	return nil
 }
 
 func summarizeQueues(data *QueueData) QueueSummary {
@@ -338,6 +360,37 @@ func parseFractionalMemory(raw string) (float64, float64) {
 		return 0, 0
 	}
 	return parseMemoryToBytes(parts[0]), parseMemoryToBytes(parts[1])
+}
+
+func firstText(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return strings.TrimSpace(value)
+		}
+	}
+	return ""
+}
+
+func firstScalarText(values ...jsonScalar) string {
+	for _, value := range values {
+		if value.set && value.textValue() != "" {
+			return value.textValue()
+		}
+	}
+	return ""
+}
+
+func firstPositiveInt(values ...jsonScalar) int {
+	for _, value := range values {
+		if !value.set {
+			continue
+		}
+		parsed := value.intValue()
+		if parsed > 0 {
+			return parsed
+		}
+	}
+	return 0
 }
 
 func sortedQueueNames(records map[string]queueJSONRecord) []string {
