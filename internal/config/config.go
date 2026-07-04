@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strconv"
@@ -46,7 +47,7 @@ type Parsed struct {
 
 type fileConfig struct {
 	Web struct {
-		TelemetryPath string `yaml:"telemetry_path"`
+		TelemetryPath *string `yaml:"telemetry_path"`
 	} `yaml:"web"`
 	Collector struct {
 		Interval                    duration `yaml:"interval"`
@@ -55,12 +56,13 @@ type fileConfig struct {
 		IncludeJobInspectionMetrics bool     `yaml:"include_job_inspection_metrics"`
 	} `yaml:"collector"`
 	PBS struct {
-		BinaryDir string `yaml:"binary_dir"`
+		BinaryDir *string `yaml:"binary_dir"`
 	} `yaml:"pbs"`
 }
 
 type duration struct {
 	time.Duration
+	set bool
 }
 
 func (d *duration) UnmarshalYAML(node *yaml.Node) error {
@@ -72,6 +74,7 @@ func (d *duration) UnmarshalYAML(node *yaml.Node) error {
 		return fmt.Errorf("invalid duration %q: %w", node.Value, err)
 	}
 	d.Duration = value
+	d.set = true
 	return nil
 }
 
@@ -128,21 +131,26 @@ func Parse(args []string) (*Parsed, error) {
 		return nil, err
 	}
 
-	return &Parsed{
-		Runtime: Config{
-			Web: WebConfig{
-				TelemetryPath: *telemetryPath,
-			},
-			Collector: CollectorConfig{
-				Interval:                    *interval,
-				Timeout:                     *timeout,
-				IncludeUserMetrics:          *includeUserMetrics,
-				IncludeJobInspectionMetrics: *includeJobInspectionMetrics,
-			},
-			PBS: PBSConfig{
-				BinaryDir: *binaryDir,
-			},
+	runtimeConfig := Config{
+		Web: WebConfig{
+			TelemetryPath: *telemetryPath,
 		},
+		Collector: CollectorConfig{
+			Interval:                    *interval,
+			Timeout:                     *timeout,
+			IncludeUserMetrics:          *includeUserMetrics,
+			IncludeJobInspectionMetrics: *includeJobInspectionMetrics,
+		},
+		PBS: PBSConfig{
+			BinaryDir: *binaryDir,
+		},
+	}
+	if err := runtimeConfig.Validate(); err != nil {
+		return nil, err
+	}
+
+	return &Parsed{
+		Runtime:    runtimeConfig,
 		Web:        webFlags,
 		Log:        &promslog.Config{Level: logLevel, Format: logFormat},
 		ConfigFile: *flagConfigFile,
@@ -161,26 +169,53 @@ func LoadFile(path string) (Config, error) {
 	}
 
 	var fileCfg fileConfig
-	if err := yaml.Unmarshal(content, &fileCfg); err != nil {
+	decoder := yaml.NewDecoder(bytes.NewReader(content))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(&fileCfg); err != nil {
 		return Config{}, fmt.Errorf("parse config file %q: %w", path, err)
 	}
 
-	if fileCfg.Web.TelemetryPath != "" {
-		cfg.Web.TelemetryPath = fileCfg.Web.TelemetryPath
+	if fileCfg.Web.TelemetryPath != nil {
+		cfg.Web.TelemetryPath = *fileCfg.Web.TelemetryPath
 	}
-	if fileCfg.Collector.Interval.Duration > 0 {
+	if fileCfg.Collector.Interval.set {
 		cfg.Collector.Interval = fileCfg.Collector.Interval.Duration
 	}
-	if fileCfg.Collector.Timeout.Duration > 0 {
+	if fileCfg.Collector.Timeout.set {
 		cfg.Collector.Timeout = fileCfg.Collector.Timeout.Duration
 	}
 	cfg.Collector.IncludeUserMetrics = fileCfg.Collector.IncludeUserMetrics
 	cfg.Collector.IncludeJobInspectionMetrics = fileCfg.Collector.IncludeJobInspectionMetrics
-	if fileCfg.PBS.BinaryDir != "" {
-		cfg.PBS.BinaryDir = fileCfg.PBS.BinaryDir
+	if fileCfg.PBS.BinaryDir != nil {
+		cfg.PBS.BinaryDir = *fileCfg.PBS.BinaryDir
+	}
+
+	if err := cfg.Validate(); err != nil {
+		return Config{}, err
 	}
 
 	return cfg, nil
+}
+
+func (c Config) Validate() error {
+	if c.Collector.Interval <= 0 {
+		return fmt.Errorf("collector.interval must be greater than zero")
+	}
+	if c.Collector.Timeout <= 0 {
+		return fmt.Errorf("collector.timeout must be greater than zero")
+	}
+	if err := validateTelemetryPath(c.Web.TelemetryPath); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateTelemetryPath(path string) error {
+	trimmed := strings.TrimSpace(path)
+	if trimmed == "" || !strings.HasPrefix(trimmed, "/") || trimmed == "/" {
+		return fmt.Errorf("web.telemetry-path must start with '/' and must not be '/'")
+	}
+	return nil
 }
 
 func extractConfigFile(args []string) string {

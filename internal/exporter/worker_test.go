@@ -14,11 +14,19 @@ type fakeCollector struct {
 	err                 error
 	jobInspectionErr    error
 	jobInspectionActive bool
+	result              *pbs.CollectionResult
+	nilResult           bool
 }
 
 func (f fakeCollector) Collect(_ context.Context) (*pbs.CollectionResult, error) {
 	if f.err != nil {
 		return nil, f.err
+	}
+	if f.nilResult {
+		return nil, nil
+	}
+	if f.result != nil {
+		return f.result, nil
 	}
 	return &pbs.CollectionResult{
 		Snapshot:               f.snapshot,
@@ -79,5 +87,49 @@ func TestWorkerKeepsSnapshotWhenJobInspectionFails(t *testing.T) {
 	}
 	if status.JobInspectionErrorsTotal != 1 {
 		t.Fatalf("expected job inspection errors to increment, got %d", status.JobInspectionErrorsTotal)
+	}
+}
+
+func TestWorkerRejectsNilCollectionResult(t *testing.T) {
+	store := NewStore()
+	worker := NewWorker(fakeCollector{nilResult: true}, store, time.Minute, nil)
+
+	err := worker.RunOnce(context.Background())
+	if err == nil {
+		t.Fatal("expected RunOnce to fail when collector returns nil result")
+	}
+
+	if store.Snapshot() != nil {
+		t.Fatal("expected snapshot to stay empty")
+	}
+
+	status := store.Status()
+	if status.Up {
+		t.Fatal("expected exporter to stay down")
+	}
+	if status.CollectErrorsTotal != 1 {
+		t.Fatalf("expected collect errors to increment, got %d", status.CollectErrorsTotal)
+	}
+}
+
+func TestWorkerRejectsNilSnapshot(t *testing.T) {
+	store := NewStore()
+	worker := NewWorker(fakeCollector{result: &pbs.CollectionResult{}}, store, time.Minute, nil)
+
+	err := worker.RunOnce(context.Background())
+	if err == nil {
+		t.Fatal("expected RunOnce to fail when collector returns nil snapshot")
+	}
+
+	if store.Snapshot() != nil {
+		t.Fatal("expected snapshot to stay empty")
+	}
+
+	status := store.Status()
+	if status.Up {
+		t.Fatal("expected exporter to stay down")
+	}
+	if status.CollectErrorsTotal != 1 {
+		t.Fatalf("expected collect errors to increment, got %d", status.CollectErrorsTotal)
 	}
 }

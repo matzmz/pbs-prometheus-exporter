@@ -2,6 +2,7 @@ package exporter
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"time"
 
@@ -18,6 +19,11 @@ type Worker struct {
 	interval  time.Duration
 	logger    *slog.Logger
 }
+
+var (
+	errNilCollectionResult = errors.New("collector returned nil result")
+	errNilSnapshot         = errors.New("collector returned nil snapshot")
+)
 
 func NewWorker(collector SnapshotCollector, store *Store, interval time.Duration, logger *slog.Logger) *Worker {
 	if logger == nil {
@@ -58,8 +64,16 @@ func (w *Worker) RunOnce(ctx context.Context) error {
 		w.store.Clear(started, duration, err)
 		return err
 	}
+	if result == nil {
+		w.store.Clear(started, duration, errNilCollectionResult)
+		return errNilCollectionResult
+	}
 
 	snapshot := result.Snapshot
+	if snapshot == nil {
+		w.store.Clear(started, duration, errNilSnapshot)
+		return errNilSnapshot
+	}
 	if snapshot.CollectedAt.IsZero() {
 		snapshot.CollectedAt = started
 	}

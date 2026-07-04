@@ -3,6 +3,7 @@ package web
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -12,6 +13,10 @@ import (
 )
 
 func NewHandler(registry *prometheus.Registry, telemetryPath string, store *exporter.Store) (http.Handler, error) {
+	if err := validateTelemetryPath(telemetryPath); err != nil {
+		return nil, err
+	}
+
 	mux := http.NewServeMux()
 	mux.Handle(telemetryPath, promhttp.HandlerFor(registry, promhttp.HandlerOpts{
 		EnableOpenMetrics: true,
@@ -46,4 +51,12 @@ func NewHandler(registry *prometheus.Registry, telemetryPath string, store *expo
 	mux.Handle("/", landing)
 
 	return mux, nil
+}
+
+func validateTelemetryPath(path string) error {
+	trimmed := strings.TrimSpace(path)
+	if trimmed == "" || !strings.HasPrefix(trimmed, "/") || trimmed == "/" {
+		return fmt.Errorf("invalid telemetry path %q", path)
+	}
+	return nil
 }

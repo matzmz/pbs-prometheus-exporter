@@ -2,6 +2,7 @@ package pbs
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 )
@@ -402,7 +403,7 @@ func TestParseJobInspectionOutputParsesTypedMetrics(t *testing.T) {
         "ncpus": 4,
         "ngpus": 0,
         "nodect": 1,
-        "walltime": {"invalid": true}
+        "walltime": "invalid"
       },
       "resources_used": {
         "cpupercent": 12
@@ -465,6 +466,30 @@ func TestParseJobInspectionOutputParsesTypedMetrics(t *testing.T) {
 	}
 	if !queuedJob.QueueWaitSeconds.Set || queuedJob.QueueWaitSeconds.Value != 5400 {
 		t.Fatalf("unexpected queue wait: %+v", queuedJob.QueueWaitSeconds)
+	}
+}
+
+func TestParseJobInspectionOutputRejectsNonScalarFields(t *testing.T) {
+	collectedAt := time.Date(2026, 7, 2, 10, 0, 0, 0, time.UTC)
+
+	_, err := parseJobInspectionJSON(`{
+  "Jobs": {
+    "101.server": {
+      "queue": "gpuq",
+      "Job_Owner": "bob@submit02",
+      "job_state": "Q",
+      "qtime": "Thu Jul  2 08:30:00 2026",
+      "Resource_List": {
+        "walltime": {"invalid": true}
+      }
+    }
+  }
+}`, collectedAt)
+	if err == nil {
+		t.Fatal("expected parseJobInspectionJSON to reject object-valued scalar fields")
+	}
+	if !strings.Contains(err.Error(), "expected JSON scalar") {
+		t.Fatalf("parseJobInspectionJSON error = %q, want scalar parsing context", err.Error())
 	}
 }
 

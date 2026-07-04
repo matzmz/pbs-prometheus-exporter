@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -79,5 +80,63 @@ func TestFlagsOverrideDefaults(t *testing.T) {
 	}
 	if *parsed.Web.WebConfigFile != "/etc/pbs-exporter/web-config.yml" {
 		t.Fatalf("unexpected web config file: %q", *parsed.Web.WebConfigFile)
+	}
+}
+
+func TestParseRejectsInvalidRuntimeOverrides(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+		want string
+	}{
+		{
+			name: "zero interval",
+			args: []string{"--collector.interval=0s"},
+			want: "collector.interval must be greater than zero",
+		},
+		{
+			name: "negative timeout",
+			args: []string{"--collector.timeout=-5s"},
+			want: "collector.timeout must be greater than zero",
+		},
+		{
+			name: "missing leading slash in telemetry path",
+			args: []string{"--web.telemetry-path=metrics"},
+			want: "web.telemetry-path must start with '/' and must not be '/'",
+		},
+		{
+			name: "root telemetry path",
+			args: []string{"--web.telemetry-path=/"},
+			want: "web.telemetry-path must start with '/' and must not be '/'",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := Parse(test.args)
+			if err == nil {
+				t.Fatal("expected Parse to return an error")
+			}
+			if !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("Parse error = %q, want substring %q", err.Error(), test.want)
+			}
+		})
+	}
+}
+
+func TestLoadFileRejectsUnknownYAMLKeys(t *testing.T) {
+	dir := t.TempDir()
+	configPath := filepath.Join(dir, "config.yml")
+	configYAML := []byte("collector:\n  interval: 30s\nunexpected: true\n")
+	if err := os.WriteFile(configPath, configYAML, 0o644); err != nil {
+		t.Fatalf("WriteFile returned error: %v", err)
+	}
+
+	_, err := LoadFile(configPath)
+	if err == nil {
+		t.Fatal("expected LoadFile to reject unknown keys")
+	}
+	if !strings.Contains(err.Error(), "unexpected") {
+		t.Fatalf("LoadFile error = %q, want unknown key information", err.Error())
 	}
 }
