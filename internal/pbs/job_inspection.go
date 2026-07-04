@@ -104,7 +104,7 @@ func (s *jsonScalar) UnmarshalJSON(data []byte) error {
 	if trimmed[0] == '"' {
 		var value string
 		if err := json.Unmarshal(trimmed, &value); err != nil {
-			return nil
+			return err
 		}
 		s.text = strings.TrimSpace(value)
 		s.set = true
@@ -126,7 +126,7 @@ func (s *jsonScalar) UnmarshalJSON(data []byte) error {
 	}
 
 	*s = jsonScalar{}
-	return nil
+	return fmt.Errorf("expected JSON scalar, got %s", string(trimmed))
 }
 
 func (s jsonScalar) optionalNumber() OptionalFloat64 {
