@@ -8,9 +8,10 @@ import (
 )
 
 type Store struct {
-	mu       sync.RWMutex
-	snapshot *pbs.Snapshot
-	status   Status
+	mu                  sync.RWMutex
+	snapshot            *pbs.Snapshot
+	status              Status
+	jobSampleHistograms *jobSampleHistograms
 }
 
 type Status struct {
@@ -30,6 +31,13 @@ func NewStore() *Store {
 	return &Store{}
 }
 
+func (s *Store) ConfigureJobSampleHistograms(config JobSampleHistogramConfig) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.jobSampleHistograms = newJobSampleHistograms(config)
+}
+
 func (s *Store) UpdateSuccess(result *pbs.CollectionResult, collectedAt time.Time, duration time.Duration) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -43,6 +51,7 @@ func (s *Store) UpdateSuccess(result *pbs.CollectionResult, collectedAt time.Tim
 	s.status.LastCollectDuration = duration
 	s.status.LastError = ""
 	s.applyJobInspectionResult(result, collectedAt)
+	s.applyJobSampleHistograms(result)
 }
 
 func (s *Store) Clear(collectedAt time.Time, duration time.Duration, err error) {
@@ -79,6 +88,17 @@ func (s *Store) applyJobInspectionResult(result *pbs.CollectionResult, collected
 	}
 }
 
+func (s *Store) applyJobSampleHistograms(result *pbs.CollectionResult) {
+	if s.jobSampleHistograms == nil || result == nil || !result.JobInspectionAttempted || result.JobInspectionError != nil {
+		return
+	}
+	if result.Snapshot == nil || result.Snapshot.JobInspection == nil {
+		return
+	}
+
+	s.jobSampleHistograms.Observe(result.Snapshot.JobInspection)
+}
+
 func (s *Store) Snapshot() *pbs.Snapshot {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -89,4 +109,13 @@ func (s *Store) Status() Status {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.status
+}
+
+func (s *Store) JobSampleHistograms() *JobSampleHistogramSnapshots {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.jobSampleHistograms == nil {
+		return nil
+	}
+	return s.jobSampleHistograms.Snapshot()
 }

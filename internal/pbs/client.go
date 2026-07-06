@@ -9,10 +9,10 @@ import (
 )
 
 type Client struct {
-	binaryDir            string
-	timeout              time.Duration
-	includeJobInspection bool
-	logger               *slog.Logger
+	binaryDir              string
+	timeout                time.Duration
+	includeDetailedJobData bool
+	logger                 *slog.Logger
 }
 
 type Snapshot struct {
@@ -33,7 +33,7 @@ type QueueSummary struct {
 }
 
 type ClientOptions struct {
-	IncludeJobInspection bool
+	IncludeDetailedJobData bool
 }
 
 // CollectionResult always represents a successful base snapshot collection.
@@ -56,10 +56,10 @@ func NewClient(binaryDir string, timeout time.Duration, options ClientOptions, l
 		logger = slog.Default()
 	}
 	return &Client{
-		binaryDir:            binaryDir,
-		timeout:              timeout,
-		includeJobInspection: options.IncludeJobInspection,
-		logger:               logger,
+		binaryDir:              binaryDir,
+		timeout:                timeout,
+		includeDetailedJobData: options.IncludeDetailedJobData,
+		logger:                 logger,
 	}
 }
 
@@ -291,6 +291,15 @@ func parseMemoryToBytes(memStr string) float64 {
 		return val
 	}
 	return 0
+}
+
+func ParseMemoryBytes(memStr string) (float64, bool) {
+	memBytes := parseMemoryToBytes(memStr)
+	normalized := strings.ToLower(strings.TrimSpace(memStr))
+	if memBytes == 0 && normalized != "0" && normalized != "0b" && normalized != "0kb" && normalized != "0mb" && normalized != "0gb" && normalized != "0tb" {
+		return 0, false
+	}
+	return memBytes, true
 }
 
 func parseFraction(fracStr string) (free, total int) {

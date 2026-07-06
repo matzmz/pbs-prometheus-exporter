@@ -36,7 +36,7 @@ func (c *Client) Collect(ctx context.Context) (*CollectionResult, error) {
 	}
 
 	result := &CollectionResult{Snapshot: snapshot}
-	if !c.includeJobInspection {
+	if !c.includeDetailedJobData {
 		return result, nil
 	}
 

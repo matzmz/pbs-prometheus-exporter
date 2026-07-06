@@ -61,7 +61,8 @@ func (c *Collector) descriptors() []*prometheus.Desc {
 		c.serverJobHistoryEnabledDesc,
 		c.serverJobHistoryDurationDesc,
 	}
-	return append(descs, c.jobInspection.descriptors()...)
+	descs = append(descs, c.jobInspection.descriptors()...)
+	return append(descs, c.jobSampleHistograms.descriptors()...)
 }
 
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
@@ -81,6 +82,7 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(c.lastCollectSuccessTimestampDesc, prometheus.GaugeValue, unixOrZero(status.LastCollectSuccessTimestamp))
 	ch <- prometheus.MustNewConstMetric(c.snapshotTimestampDesc, prometheus.GaugeValue, unixOrZero(status.SnapshotTimestamp))
 	c.jobInspection.collectStatus(ch, status)
+	c.jobSampleHistograms.collect(ch, c.store.JobSampleHistograms())
 
 	snapshot := c.store.Snapshot()
 	if snapshot == nil {
@@ -95,6 +97,9 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	c.collectNodes(ch, snapshot.Nodes)
 	c.collectQueues(ch, snapshot)
 	c.collectServer(ch, snapshot.Server)
+	if !c.includeJobInspectionMetrics {
+		return
+	}
 	c.collectJobInspection(ch, snapshot.JobInspection)
 }
 

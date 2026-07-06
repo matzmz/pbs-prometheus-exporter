@@ -22,6 +22,7 @@ This implementation is a ground-up rewrite inspired by  `[pbs-exporter](https://
 - Exporter self-metrics for health, collection timestamps, duration, and errors
 - Optional user-labeled metrics, disabled by default to limit cardinality
 - Optional per-job inspection metrics from `qstat -F json -f`, disabled by default
+- Optional cumulative histograms for sampled requested resources of running jobs, disabled by default
 - Landing page plus `/-/healthy` and `/-/ready` endpoints
 
 ## Runtime Flags
@@ -34,6 +35,13 @@ This implementation is a ground-up rewrite inspired by  `[pbs-exporter](https://
 - `--collector.timeout`: per-command PBS timeout
 - `--collector.include-user-metrics`: enable user-labeled job metrics
 - `--collector.include-job-inspection-metrics`: enable per-job inspection metrics
+- `--collector.include-job-sample-histograms`: enable cumulative sampled histograms for running-job requested resources
+- `--collector.job-sample-cpu-buckets`: comma-separated CPU histogram buckets
+- `--collector.job-sample-memory-buckets`: comma-separated memory histogram buckets
+- `--collector.job-sample-walltime-buckets`: comma-separated walltime histogram buckets
+- `--collector.job-sample-mpi-buckets`: comma-separated MPI histogram buckets
+- `--collector.job-sample-node-buckets`: comma-separated node-count histogram buckets
+- `--collector.job-sample-gpu-buckets`: comma-separated GPU histogram buckets
 - `--pbs.binary-dir`: directory containing `qstat` and `pbsnodes`
 - `--web.telemetry-path`: metrics endpoint path
 - `--log.level`: log level
@@ -54,6 +62,7 @@ collector:
   timeout: 15s
   include_user_metrics: false
   include_job_inspection_metrics: false
+  include_job_sample_histograms: false
 
 pbs:
   binary_dir: /opt/pbs/bin
@@ -96,7 +105,7 @@ If job inspection fails while the base PBS snapshot succeeds, aggregate PBS metr
 
 ## Job Inspection Metrics
 
-When `collector.include_job_inspection_metrics` is enabled, the exporter performs one additional `qstat -F json -f` collection per refresh cycle and exposes per-job metrics with labels:
+When `collector.include_job_inspection_metrics` is enabled, the exporter exposes per-job metrics with labels from `qstat -F json -f`:
 
 - `job_id`
 - `queue`
@@ -134,6 +143,71 @@ Timing metrics in v1:
 
 - `pbs_job_runtime_seconds` for running jobs, derived from `stime`
 - `pbs_job_queue_wait_seconds` for queued jobs, derived from `qtime`
+
+## Running Job Sample Histograms
+
+When `collector.include_job_sample_histograms` is enabled, the exporter reuses the detailed `qstat -F json -f` payload and records one observation per successful refresh cycle for each `job_state = R` job that has the requested field populated.
+
+The histograms are cumulative Prometheus histograms with no labels:
+
+- `pbs_job_running_requested_cpu_cores_distribution`
+- `pbs_job_running_requested_memory_bytes_distribution`
+- `pbs_job_running_requested_walltime_seconds_distribution`
+- `pbs_job_running_requested_mpi_processes_distribution`
+- `pbs_job_running_requested_nodes_distribution`
+- `pbs_job_running_requested_gpu_devices_distribution`
+
+These histograms use only requested resources from `Resource_List`:
+
+- `ncpus`
+- `mem`
+- `walltime`
+- `mpiprocs`
+- `nodect`
+- `ngpus`
+
+Important semantics:
+
+- The distribution is over sampled observations collected at each refresh, not over unique jobs.
+- Longer-running jobs contribute multiple observations and therefore weigh more heavily.
+- These metrics do not describe actual used CPU, memory, walltime, or GPUs.
+- These metrics do not describe distinct-job distributions over a range.
+
+Default buckets:
+
+- CPU cores: `1,2,4,8,16,32,64,128,256`
+- Memory: `1gb,2gb,4gb,8gb,16gb,32gb,64gb,128gb,256gb,512gb`
+- Walltime: `30m,1h,2h,4h,8h,12h,24h,48h,96h,168h`
+- MPI processes: `1,2,4,8,16,32,64,128,256,512`
+- Node count: `1,2,4,8,16,32,64`
+- GPU devices: `1,2,4,8,16,32`
+
+Example PromQL over a one-hour range:
+
+Requested CPU p95:
+
+```promql
+histogram_quantile(
+  0.95,
+  sum by (le) (increase(pbs_job_running_requested_cpu_cores_distribution_bucket[1h]))
+)
+```
+
+Share of sampled running jobs requesting at most 8 CPU cores:
+
+```promql
+increase(pbs_job_running_requested_cpu_cores_distribution_bucket{le="8"}[1h])
+/
+increase(pbs_job_running_requested_cpu_cores_distribution_count[1h])
+```
+
+Memory distribution trend by bucket:
+
+```promql
+sum by (le) (increase(pbs_job_running_requested_memory_bytes_distribution_bucket[15m]))
+```
+
+Cumulative histograms retain prior observations across transient collection failures and reset only when the exporter process restarts.
 
 ## Queue Wait Metrics
 
@@ -248,6 +322,7 @@ It also sets `PATH` to include `/opt/pbs/bin` for PBS CLI installations that liv
 
 - Prefer keeping `collector.include_user_metrics` disabled unless you specifically need per-user series.
 - Enable `collector.include_job_inspection_metrics` only if per-job cardinality is acceptable for your Prometheus environment.
+- Enable `collector.include_job_sample_histograms` when you need time-range distribution analysis with low-cardinality metrics.
 - Tune `collector.timeout` low enough to avoid long hangs in PBS CLI calls.
 - Alert on `pbs_exporter_up == 0`.
 - Use `/-/ready` if you want a probe that reflects whether a valid PBS snapshot is currently available.

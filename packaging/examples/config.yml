@@ -3,6 +3,7 @@ collector:
   timeout: 15s
   include_user_metrics: false
   include_job_inspection_metrics: false
+  include_job_sample_histograms: false
 
 pbs:
   binary_dir: /opt/pbs/bin

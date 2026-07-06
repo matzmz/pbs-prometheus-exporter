@@ -3,6 +3,7 @@ package exporter
 import (
 	"errors"
 	"math"
+	"strconv"
 	"testing"
 	"time"
 
@@ -230,7 +231,7 @@ func TestCollectorEmitsJobInspectionMetricsFromSnapshot(t *testing.T) {
 		JobInspectionAttempted: true,
 	}, now, 150*time.Millisecond)
 
-	registry.MustRegister(NewCollector(store, Options{}))
+	registry.MustRegister(NewCollector(store, Options{IncludeJobInspectionMetrics: true}))
 
 	metricFamilies, err := registry.Gather()
 	if err != nil {
@@ -262,6 +263,140 @@ func TestCollectorEmitsJobInspectionMetricsFromSnapshot(t *testing.T) {
 	assertMetricValue(t, metricFamilies, "pbs_job_requested_cpu_cores", queuedLabels, 4)
 	assertMetricValue(t, metricFamilies, "pbs_job_queue_wait_seconds", queuedLabels, 900)
 	assertMetricMissing(t, metricFamilies, "pbs_job_used_cpu_percent", queuedLabels)
+}
+
+func TestCollectorEmitsRunningJobSampleHistograms(t *testing.T) {
+	registry := prometheus.NewRegistry()
+	store := NewStore()
+	store.ConfigureJobSampleHistograms(JobSampleHistogramConfig{
+		Enabled:         true,
+		CPUBuckets:      []float64{4, 8, 16},
+		MemoryBuckets:   []float64{4096, 8192},
+		WalltimeBuckets: []float64{3600, 7200},
+		MPIBuckets:      []float64{1, 4},
+		NodeBuckets:     []float64{1, 2},
+		GPUBuckets:      []float64{1, 2},
+	})
+
+	firstCollectedAt := time.Unix(1700000000, 0).UTC()
+	store.UpdateSuccess(&pbs.CollectionResult{
+		Snapshot: &pbs.Snapshot{
+			CollectedAt: firstCollectedAt,
+			JobInspection: &pbs.JobInspectionData{
+				Jobs: []pbs.InspectedJob{
+					{
+						JobID:    "100.server01",
+						JobState: "R",
+						Requested: pbs.RequestedJobResources{
+							CPUCores:        pbs.OptionalFloat64{Value: 8, Set: true},
+							MemoryBytes:     pbs.OptionalFloat64{Value: 4096, Set: true},
+							WalltimeSeconds: pbs.OptionalFloat64{Value: 7200, Set: true},
+							MPIProcesses:    pbs.OptionalFloat64{Value: 4, Set: true},
+							Nodes:           pbs.OptionalFloat64{Value: 2, Set: true},
+							GPUDevices:      pbs.OptionalFloat64{Value: 1, Set: true},
+						},
+					},
+					{
+						JobID:    "101.server01",
+						JobState: "R",
+						Requested: pbs.RequestedJobResources{
+							CPUCores:        pbs.OptionalFloat64{Value: 2, Set: true},
+							MemoryBytes:     pbs.OptionalFloat64{Value: 2048, Set: true},
+							WalltimeSeconds: pbs.OptionalFloat64{Value: 1800, Set: true},
+							MPIProcesses:    pbs.OptionalFloat64{Value: 1, Set: true},
+							Nodes:           pbs.OptionalFloat64{Value: 1, Set: true},
+						},
+					},
+					{
+						JobID:    "102.server01",
+						JobState: "Q",
+						Requested: pbs.RequestedJobResources{
+							CPUCores: pbs.OptionalFloat64{Value: 32, Set: true},
+						},
+					},
+				},
+			},
+		},
+		JobInspectionAttempted: true,
+	}, firstCollectedAt, 150*time.Millisecond)
+
+	store.UpdateSuccess(&pbs.CollectionResult{
+		Snapshot: &pbs.Snapshot{
+			CollectedAt: firstCollectedAt.Add(time.Minute),
+			JobInspection: &pbs.JobInspectionData{
+				Jobs: []pbs.InspectedJob{
+					{
+						JobID:    "100.server01",
+						JobState: "R",
+						Requested: pbs.RequestedJobResources{
+							CPUCores:        pbs.OptionalFloat64{Value: 8, Set: true},
+							MemoryBytes:     pbs.OptionalFloat64{Value: 4096, Set: true},
+							WalltimeSeconds: pbs.OptionalFloat64{Value: 7200, Set: true},
+							MPIProcesses:    pbs.OptionalFloat64{Value: 4, Set: true},
+							Nodes:           pbs.OptionalFloat64{Value: 2, Set: true},
+							GPUDevices:      pbs.OptionalFloat64{Value: 1, Set: true},
+						},
+					},
+					{
+						JobID:    "103.server01",
+						JobState: "R",
+						Requested: pbs.RequestedJobResources{
+							CPUCores:    pbs.OptionalFloat64{Value: 16, Set: true},
+							MemoryBytes: pbs.OptionalFloat64{Value: 8192, Set: true},
+							GPUDevices:  pbs.OptionalFloat64{Value: 2, Set: true},
+						},
+					},
+				},
+			},
+		},
+		JobInspectionAttempted: true,
+	}, firstCollectedAt.Add(time.Minute), 150*time.Millisecond)
+
+	store.UpdateSuccess(&pbs.CollectionResult{
+		Snapshot: &pbs.Snapshot{
+			CollectedAt: firstCollectedAt.Add(2 * time.Minute),
+		},
+		JobInspectionAttempted: true,
+		JobInspectionError:     errors.New("qstat json failed"),
+	}, firstCollectedAt.Add(2*time.Minute), 150*time.Millisecond)
+
+	registry.MustRegister(NewCollector(store, Options{}))
+
+	metricFamilies, err := registry.Gather()
+	if err != nil {
+		t.Fatalf("Gather returned error: %v", err)
+	}
+
+	assertHistogramCount(t, metricFamilies, "pbs_job_running_requested_cpu_cores_distribution", 4)
+	assertHistogramSum(t, metricFamilies, "pbs_job_running_requested_cpu_cores_distribution", 34)
+	assertHistogramBucketValue(t, metricFamilies, "pbs_job_running_requested_cpu_cores_distribution", "4", 1)
+	assertHistogramBucketValue(t, metricFamilies, "pbs_job_running_requested_cpu_cores_distribution", "8", 3)
+	assertHistogramBucketValue(t, metricFamilies, "pbs_job_running_requested_cpu_cores_distribution", "16", 4)
+
+	assertHistogramCount(t, metricFamilies, "pbs_job_running_requested_memory_bytes_distribution", 4)
+	assertHistogramSum(t, metricFamilies, "pbs_job_running_requested_memory_bytes_distribution", 18432)
+	assertHistogramBucketValue(t, metricFamilies, "pbs_job_running_requested_memory_bytes_distribution", "4096", 3)
+	assertHistogramBucketValue(t, metricFamilies, "pbs_job_running_requested_memory_bytes_distribution", "8192", 4)
+
+	assertHistogramCount(t, metricFamilies, "pbs_job_running_requested_walltime_seconds_distribution", 3)
+	assertHistogramSum(t, metricFamilies, "pbs_job_running_requested_walltime_seconds_distribution", 16200)
+	assertHistogramBucketValue(t, metricFamilies, "pbs_job_running_requested_walltime_seconds_distribution", "3600", 1)
+	assertHistogramBucketValue(t, metricFamilies, "pbs_job_running_requested_walltime_seconds_distribution", "7200", 3)
+
+	assertHistogramCount(t, metricFamilies, "pbs_job_running_requested_mpi_processes_distribution", 3)
+	assertHistogramSum(t, metricFamilies, "pbs_job_running_requested_mpi_processes_distribution", 9)
+	assertHistogramBucketValue(t, metricFamilies, "pbs_job_running_requested_mpi_processes_distribution", "1", 1)
+	assertHistogramBucketValue(t, metricFamilies, "pbs_job_running_requested_mpi_processes_distribution", "4", 3)
+
+	assertHistogramCount(t, metricFamilies, "pbs_job_running_requested_nodes_distribution", 3)
+	assertHistogramSum(t, metricFamilies, "pbs_job_running_requested_nodes_distribution", 5)
+	assertHistogramBucketValue(t, metricFamilies, "pbs_job_running_requested_nodes_distribution", "1", 1)
+	assertHistogramBucketValue(t, metricFamilies, "pbs_job_running_requested_nodes_distribution", "2", 3)
+
+	assertHistogramCount(t, metricFamilies, "pbs_job_running_requested_gpu_devices_distribution", 3)
+	assertHistogramSum(t, metricFamilies, "pbs_job_running_requested_gpu_devices_distribution", 4)
+	assertHistogramBucketValue(t, metricFamilies, "pbs_job_running_requested_gpu_devices_distribution", "1", 2)
+	assertHistogramBucketValue(t, metricFamilies, "pbs_job_running_requested_gpu_devices_distribution", "2", 3)
 }
 
 func TestCollectorKeepsBaseMetricsWhenJobInspectionFails(t *testing.T) {
@@ -359,4 +494,70 @@ func metricValue(metric *dto.Metric) float64 {
 	default:
 		return 0
 	}
+}
+
+func assertHistogramCount(t *testing.T, metricFamilies []*dto.MetricFamily, name string, expected uint64) {
+	t.Helper()
+
+	histogram := findHistogramMetric(t, metricFamilies, name)
+	if histogram.GetSampleCount() != expected {
+		t.Fatalf("unexpected histogram count for %s: got %d want %d", name, histogram.GetSampleCount(), expected)
+	}
+}
+
+func assertHistogramSum(t *testing.T, metricFamilies []*dto.MetricFamily, name string, expected float64) {
+	t.Helper()
+
+	histogram := findHistogramMetric(t, metricFamilies, name)
+	if histogram.GetSampleSum() != expected {
+		t.Fatalf("unexpected histogram sum for %s: got %v want %v", name, histogram.GetSampleSum(), expected)
+	}
+}
+
+func assertHistogramBucketValue(t *testing.T, metricFamilies []*dto.MetricFamily, name, upperBound string, expected uint64) {
+	t.Helper()
+
+	histogram := findHistogramMetric(t, metricFamilies, name)
+	for _, bucket := range histogram.GetBucket() {
+		if bucket.GetUpperBound() == mustParseFloat(t, upperBound) {
+			if bucket.GetCumulativeCount() != expected {
+				t.Fatalf("unexpected histogram bucket for %s le=%s: got %d want %d", name, upperBound, bucket.GetCumulativeCount(), expected)
+			}
+			return
+		}
+	}
+
+	t.Fatalf("histogram bucket %s le=%s not found", name, upperBound)
+}
+
+func findHistogramMetric(t *testing.T, metricFamilies []*dto.MetricFamily, name string) *dto.Histogram {
+	t.Helper()
+
+	for _, family := range metricFamilies {
+		if family.GetName() != name {
+			continue
+		}
+		for _, metric := range family.GetMetric() {
+			if len(metric.GetLabel()) != 0 {
+				t.Fatalf("histogram %s unexpectedly contains labels", name)
+			}
+			if metric.Histogram == nil {
+				t.Fatalf("metric family %s is not a histogram", name)
+			}
+			return metric.GetHistogram()
+		}
+	}
+
+	t.Fatalf("histogram %s not found", name)
+	return nil
+}
+
+func mustParseFloat(t *testing.T, raw string) float64 {
+	t.Helper()
+
+	value, err := strconv.ParseFloat(raw, 64)
+	if err != nil {
+		t.Fatalf("ParseFloat(%q) returned error: %v", raw, err)
+	}
+	return value
 }

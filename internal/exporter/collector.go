@@ -5,13 +5,16 @@ import (
 )
 
 type Options struct {
-	IncludeUserMetrics bool
+	IncludeUserMetrics          bool
+	IncludeJobInspectionMetrics bool
 }
 
 type Collector struct {
-	store              *Store
-	includeUserMetrics bool
-	jobInspection      jobInspectionMetrics
+	store                       *Store
+	includeUserMetrics          bool
+	includeJobInspectionMetrics bool
+	jobInspection               jobInspectionMetrics
+	jobSampleHistograms         jobSampleHistogramMetrics
 
 	exporterBuildInfoDesc           *prometheus.Desc
 	exporterUpDesc                  *prometheus.Desc
@@ -60,9 +63,11 @@ type Collector struct {
 
 func NewCollector(store *Store, options Options) *Collector {
 	return &Collector{
-		store:              store,
-		includeUserMetrics: options.IncludeUserMetrics,
-		jobInspection:      newJobInspectionMetrics(),
+		store:                       store,
+		includeUserMetrics:          options.IncludeUserMetrics,
+		includeJobInspectionMetrics: options.IncludeJobInspectionMetrics,
+		jobInspection:               newJobInspectionMetrics(),
+		jobSampleHistograms:         newJobSampleHistogramMetrics(),
 		exporterBuildInfoDesc: prometheus.NewDesc(
 			"pbs_exporter_build_info",
 			"Build information for this pbs-exporter instance.",

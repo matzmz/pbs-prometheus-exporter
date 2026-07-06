@@ -33,8 +33,17 @@ func main() {
 	defer cancel()
 
 	store := exporter.NewStore()
+	store.ConfigureJobSampleHistograms(exporter.JobSampleHistogramConfig{
+		Enabled:         parsed.Runtime.Collector.IncludeJobSampleHistograms,
+		CPUBuckets:      parsed.Runtime.Collector.JobSampleCPUBuckets,
+		MemoryBuckets:   parsed.Runtime.Collector.JobSampleMemoryBuckets,
+		WalltimeBuckets: parsed.Runtime.Collector.JobSampleWalltimeBuckets,
+		MPIBuckets:      parsed.Runtime.Collector.JobSampleMPIBuckets,
+		NodeBuckets:     parsed.Runtime.Collector.JobSampleNodeBuckets,
+		GPUBuckets:      parsed.Runtime.Collector.JobSampleGPUBuckets,
+	})
 	client := pbs.NewClient(parsed.Runtime.PBS.BinaryDir, parsed.Runtime.Collector.Timeout, pbs.ClientOptions{
-		IncludeJobInspection: parsed.Runtime.Collector.IncludeJobInspectionMetrics,
+		IncludeDetailedJobData: parsed.Runtime.Collector.IncludeJobInspectionMetrics || parsed.Runtime.Collector.IncludeJobSampleHistograms,
 	}, logger)
 	worker := exporter.NewWorker(client, store, parsed.Runtime.Collector.Interval, logger)
 
@@ -44,7 +53,8 @@ func main() {
 		collectors.NewGoCollector(),
 		collectors.NewBuildInfoCollector(),
 		exporter.NewCollector(store, exporter.Options{
-			IncludeUserMetrics: parsed.Runtime.Collector.IncludeUserMetrics,
+			IncludeUserMetrics:          parsed.Runtime.Collector.IncludeUserMetrics,
+			IncludeJobInspectionMetrics: parsed.Runtime.Collector.IncludeJobInspectionMetrics,
 		}),
 	)
 
@@ -77,6 +87,7 @@ func main() {
 		"collector_timeout", parsed.Runtime.Collector.Timeout.String(),
 		"include_user_metrics", parsed.Runtime.Collector.IncludeUserMetrics,
 		"include_job_inspection_metrics", parsed.Runtime.Collector.IncludeJobInspectionMetrics,
+		"include_job_sample_histograms", parsed.Runtime.Collector.IncludeJobSampleHistograms,
 	)
 
 	if err := toolkitweb.ListenAndServe(server, parsed.Web, logger); err != nil && !errors.Is(err, http.ErrServerClosed) {

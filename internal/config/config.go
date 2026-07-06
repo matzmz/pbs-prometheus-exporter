@@ -32,6 +32,13 @@ type CollectorConfig struct {
 	Timeout                     time.Duration `yaml:"-"`
 	IncludeUserMetrics          bool          `yaml:"include_user_metrics"`
 	IncludeJobInspectionMetrics bool          `yaml:"include_job_inspection_metrics"`
+	IncludeJobSampleHistograms  bool          `yaml:"include_job_sample_histograms"`
+	JobSampleCPUBuckets         []float64     `yaml:"-"`
+	JobSampleMemoryBuckets      []float64     `yaml:"-"`
+	JobSampleWalltimeBuckets    []float64     `yaml:"-"`
+	JobSampleMPIBuckets         []float64     `yaml:"-"`
+	JobSampleNodeBuckets        []float64     `yaml:"-"`
+	JobSampleGPUBuckets         []float64     `yaml:"-"`
 }
 
 type PBSConfig struct {
@@ -50,10 +57,17 @@ type fileConfig struct {
 		TelemetryPath *string `yaml:"telemetry_path"`
 	} `yaml:"web"`
 	Collector struct {
-		Interval                    duration `yaml:"interval"`
-		Timeout                     duration `yaml:"timeout"`
-		IncludeUserMetrics          bool     `yaml:"include_user_metrics"`
-		IncludeJobInspectionMetrics bool     `yaml:"include_job_inspection_metrics"`
+		Interval                    duration             `yaml:"interval"`
+		Timeout                     duration             `yaml:"timeout"`
+		IncludeUserMetrics          bool                 `yaml:"include_user_metrics"`
+		IncludeJobInspectionMetrics bool                 `yaml:"include_job_inspection_metrics"`
+		IncludeJobSampleHistograms  bool                 `yaml:"include_job_sample_histograms"`
+		JobSampleCPUBuckets         numericBucketValues  `yaml:"job_sample_cpu_buckets"`
+		JobSampleMemoryBuckets      memoryBucketValues   `yaml:"job_sample_memory_buckets"`
+		JobSampleWalltimeBuckets    durationBucketValues `yaml:"job_sample_walltime_buckets"`
+		JobSampleMPIBuckets         numericBucketValues  `yaml:"job_sample_mpi_buckets"`
+		JobSampleNodeBuckets        numericBucketValues  `yaml:"job_sample_node_buckets"`
+		JobSampleGPUBuckets         numericBucketValues  `yaml:"job_sample_gpu_buckets"`
 	} `yaml:"collector"`
 	PBS struct {
 		BinaryDir *string `yaml:"binary_dir"`
@@ -88,6 +102,13 @@ func Default() Config {
 			Timeout:                     15 * time.Second,
 			IncludeUserMetrics:          false,
 			IncludeJobInspectionMetrics: false,
+			IncludeJobSampleHistograms:  false,
+			JobSampleCPUBuckets:         defaultJobSampleCPUBuckets(),
+			JobSampleMemoryBuckets:      defaultJobSampleMemoryBuckets(),
+			JobSampleWalltimeBuckets:    defaultJobSampleWalltimeBuckets(),
+			JobSampleMPIBuckets:         defaultJobSampleMPIBuckets(),
+			JobSampleNodeBuckets:        defaultJobSampleNodeBuckets(),
+			JobSampleGPUBuckets:         defaultJobSampleGPUBuckets(),
 		},
 		PBS: PBSConfig{
 			BinaryDir: "",
@@ -116,6 +137,13 @@ func Parse(args []string) (*Parsed, error) {
 	timeout := app.Flag("collector.timeout", "Per-command timeout for PBS CLI invocations.").Default(cfg.Collector.Timeout.String()).Duration()
 	includeUserMetrics := app.Flag("collector.include-user-metrics", "Expose user-labeled job metrics.").Default(strconv.FormatBool(cfg.Collector.IncludeUserMetrics)).Bool()
 	includeJobInspectionMetrics := app.Flag("collector.include-job-inspection-metrics", "Expose per-job inspection metrics from qstat JSON output.").Default(strconv.FormatBool(cfg.Collector.IncludeJobInspectionMetrics)).Bool()
+	includeJobSampleHistograms := app.Flag("collector.include-job-sample-histograms", "Expose cumulative histograms of sampled requested resources for running jobs.").Default(strconv.FormatBool(cfg.Collector.IncludeJobSampleHistograms)).Bool()
+	jobSampleCPUBuckets := app.Flag("collector.job-sample-cpu-buckets", "Comma-separated CPU core bucket upper bounds for sampled running-job histograms.").Default(formatNumericBuckets(cfg.Collector.JobSampleCPUBuckets)).String()
+	jobSampleMemoryBuckets := app.Flag("collector.job-sample-memory-buckets", "Comma-separated memory bucket upper bounds for sampled running-job histograms. Values accept byte suffixes like 4gb.").Default(formatMemoryBuckets(cfg.Collector.JobSampleMemoryBuckets)).String()
+	jobSampleWalltimeBuckets := app.Flag("collector.job-sample-walltime-buckets", "Comma-separated walltime bucket upper bounds for sampled running-job histograms. Values accept Go durations like 1h or 30m.").Default(formatDurationBuckets(cfg.Collector.JobSampleWalltimeBuckets)).String()
+	jobSampleMPIBuckets := app.Flag("collector.job-sample-mpi-buckets", "Comma-separated MPI process bucket upper bounds for sampled running-job histograms.").Default(formatNumericBuckets(cfg.Collector.JobSampleMPIBuckets)).String()
+	jobSampleNodeBuckets := app.Flag("collector.job-sample-node-buckets", "Comma-separated node-count bucket upper bounds for sampled running-job histograms.").Default(formatNumericBuckets(cfg.Collector.JobSampleNodeBuckets)).String()
+	jobSampleGPUBuckets := app.Flag("collector.job-sample-gpu-buckets", "Comma-separated GPU device bucket upper bounds for sampled running-job histograms.").Default(formatNumericBuckets(cfg.Collector.JobSampleGPUBuckets)).String()
 	binaryDir := app.Flag("pbs.binary-dir", "Directory containing PBS CLI binaries. Empty uses PATH.").Default(cfg.PBS.BinaryDir).String()
 
 	logLevel := promslog.NewLevel()
@@ -131,6 +159,31 @@ func Parse(args []string) (*Parsed, error) {
 		return nil, err
 	}
 
+	parsedCPUBuckets, err := parseNumericBuckets(*jobSampleCPUBuckets)
+	if err != nil {
+		return nil, fmt.Errorf("parse --collector.job-sample-cpu-buckets: %w", err)
+	}
+	parsedMemoryBuckets, err := parseMemoryBuckets(*jobSampleMemoryBuckets)
+	if err != nil {
+		return nil, fmt.Errorf("parse --collector.job-sample-memory-buckets: %w", err)
+	}
+	parsedWalltimeBuckets, err := parseDurationBuckets(*jobSampleWalltimeBuckets)
+	if err != nil {
+		return nil, fmt.Errorf("parse --collector.job-sample-walltime-buckets: %w", err)
+	}
+	parsedMPIBuckets, err := parseNumericBuckets(*jobSampleMPIBuckets)
+	if err != nil {
+		return nil, fmt.Errorf("parse --collector.job-sample-mpi-buckets: %w", err)
+	}
+	parsedNodeBuckets, err := parseNumericBuckets(*jobSampleNodeBuckets)
+	if err != nil {
+		return nil, fmt.Errorf("parse --collector.job-sample-node-buckets: %w", err)
+	}
+	parsedGPUBuckets, err := parseNumericBuckets(*jobSampleGPUBuckets)
+	if err != nil {
+		return nil, fmt.Errorf("parse --collector.job-sample-gpu-buckets: %w", err)
+	}
+
 	runtimeConfig := Config{
 		Web: WebConfig{
 			TelemetryPath: *telemetryPath,
@@ -140,6 +193,13 @@ func Parse(args []string) (*Parsed, error) {
 			Timeout:                     *timeout,
 			IncludeUserMetrics:          *includeUserMetrics,
 			IncludeJobInspectionMetrics: *includeJobInspectionMetrics,
+			IncludeJobSampleHistograms:  *includeJobSampleHistograms,
+			JobSampleCPUBuckets:         parsedCPUBuckets,
+			JobSampleMemoryBuckets:      parsedMemoryBuckets,
+			JobSampleWalltimeBuckets:    parsedWalltimeBuckets,
+			JobSampleMPIBuckets:         parsedMPIBuckets,
+			JobSampleNodeBuckets:        parsedNodeBuckets,
+			JobSampleGPUBuckets:         parsedGPUBuckets,
 		},
 		PBS: PBSConfig{
 			BinaryDir: *binaryDir,
@@ -186,6 +246,25 @@ func LoadFile(path string) (Config, error) {
 	}
 	cfg.Collector.IncludeUserMetrics = fileCfg.Collector.IncludeUserMetrics
 	cfg.Collector.IncludeJobInspectionMetrics = fileCfg.Collector.IncludeJobInspectionMetrics
+	cfg.Collector.IncludeJobSampleHistograms = fileCfg.Collector.IncludeJobSampleHistograms
+	if fileCfg.Collector.JobSampleCPUBuckets.set {
+		cfg.Collector.JobSampleCPUBuckets = fileCfg.Collector.JobSampleCPUBuckets.values
+	}
+	if fileCfg.Collector.JobSampleMemoryBuckets.set {
+		cfg.Collector.JobSampleMemoryBuckets = fileCfg.Collector.JobSampleMemoryBuckets.values
+	}
+	if fileCfg.Collector.JobSampleWalltimeBuckets.set {
+		cfg.Collector.JobSampleWalltimeBuckets = fileCfg.Collector.JobSampleWalltimeBuckets.values
+	}
+	if fileCfg.Collector.JobSampleMPIBuckets.set {
+		cfg.Collector.JobSampleMPIBuckets = fileCfg.Collector.JobSampleMPIBuckets.values
+	}
+	if fileCfg.Collector.JobSampleNodeBuckets.set {
+		cfg.Collector.JobSampleNodeBuckets = fileCfg.Collector.JobSampleNodeBuckets.values
+	}
+	if fileCfg.Collector.JobSampleGPUBuckets.set {
+		cfg.Collector.JobSampleGPUBuckets = fileCfg.Collector.JobSampleGPUBuckets.values
+	}
 	if fileCfg.PBS.BinaryDir != nil {
 		cfg.PBS.BinaryDir = *fileCfg.PBS.BinaryDir
 	}
@@ -203,6 +282,24 @@ func (c Config) Validate() error {
 	}
 	if c.Collector.Timeout <= 0 {
 		return fmt.Errorf("collector.timeout must be greater than zero")
+	}
+	if err := validateBucketValues("collector.job_sample_cpu_buckets", c.Collector.JobSampleCPUBuckets); err != nil {
+		return err
+	}
+	if err := validateBucketValues("collector.job_sample_memory_buckets", c.Collector.JobSampleMemoryBuckets); err != nil {
+		return err
+	}
+	if err := validateBucketValues("collector.job_sample_walltime_buckets", c.Collector.JobSampleWalltimeBuckets); err != nil {
+		return err
+	}
+	if err := validateBucketValues("collector.job_sample_mpi_buckets", c.Collector.JobSampleMPIBuckets); err != nil {
+		return err
+	}
+	if err := validateBucketValues("collector.job_sample_node_buckets", c.Collector.JobSampleNodeBuckets); err != nil {
+		return err
+	}
+	if err := validateBucketValues("collector.job_sample_gpu_buckets", c.Collector.JobSampleGPUBuckets); err != nil {
+		return err
 	}
 	if err := validateTelemetryPath(c.Web.TelemetryPath); err != nil {
 		return err
