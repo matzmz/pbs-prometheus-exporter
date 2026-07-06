@@ -18,8 +18,8 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
+  "id": 0,
   "links": [],
-  "liveNow": false,
   "panels": [
     {
       "collapsed": false,
@@ -52,7 +52,7 @@
             "steps": [
               {
                 "color": "blue",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -72,6 +72,7 @@
         "graphMode": "area",
         "justifyMode": "center",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -112,12 +113,14 @@
           },
           "decimals": 1,
           "mappings": [],
+          "max": 100,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "yellow",
@@ -129,8 +132,6 @@
               }
             ]
           },
-          "max": 100,
-          "min": 0,
           "unit": "percent"
         },
         "overrides": []
@@ -142,11 +143,13 @@
         "y": 1
       },
       "id": 3,
+      "interval": "3m",
       "options": {
         "colorMode": "value",
         "graphMode": "area",
         "justifyMode": "center",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -168,6 +171,7 @@
           "editorMode": "code",
           "expr": "100 * (sum(increase(pbs_job_running_requested_cpu_cores_distribution_count[$__range])) - sum(increase(pbs_job_running_requested_cpu_cores_distribution_bucket{le=\"64\"}[$__range]))) / scalar(clamp_min(sum(increase(pbs_job_running_requested_cpu_cores_distribution_count[$__range])), 1))",
           "legendFormat": "> 64 cores",
+          "range": true,
           "refId": "A"
         }
       ],
@@ -187,12 +191,14 @@
           },
           "decimals": 1,
           "mappings": [],
+          "max": 100,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "yellow",
@@ -204,8 +210,6 @@
               }
             ]
           },
-          "max": 100,
-          "min": 0,
           "unit": "percent"
         },
         "overrides": []
@@ -217,11 +221,13 @@
         "y": 1
       },
       "id": 4,
+      "interval": "3m",
       "options": {
         "colorMode": "value",
         "graphMode": "area",
         "justifyMode": "center",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -262,12 +268,14 @@
           },
           "decimals": 1,
           "mappings": [],
+          "max": 100,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "yellow",
@@ -279,8 +287,6 @@
               }
             ]
           },
-          "max": 100,
-          "min": 0,
           "unit": "percent"
         },
         "overrides": []
@@ -292,11 +298,13 @@
         "y": 1
       },
       "id": 5,
+      "interval": "3m",
       "options": {
         "colorMode": "value",
         "graphMode": "area",
         "justifyMode": "center",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -344,7 +352,7 @@
             "steps": [
               {
                 "color": "red",
-                "value": null
+                "value": 0
               },
               {
                 "color": "yellow",
@@ -367,8 +375,15 @@
         "y": 1
       },
       "id": 6,
+      "interval": "3m",
       "options": {
         "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
         "maxVizHeight": 300,
         "minVizHeight": 16,
         "minVizWidth": 8,
@@ -412,6 +427,7 @@
           "color": {
             "mode": "thresholds"
           },
+          "decimals": 0,
           "mappings": [
             {
               "options": {},
@@ -423,7 +439,7 @@
             "steps": [
               {
                 "color": "red",
-                "value": null
+                "value": 0
               },
               {
                 "color": "green",
@@ -431,7 +447,6 @@
               }
             ]
           },
-          "decimals": 0,
           "unit": "short"
         },
         "overrides": []
@@ -448,6 +463,7 @@
         "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -506,6 +522,7 @@
             "axisLabel": "cores",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 18,
             "gradientMode": "opacity",
@@ -522,6 +539,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -538,7 +556,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -553,6 +571,7 @@
         "y": 6
       },
       "id": 9,
+      "interval": "3m",
       "options": {
         "legend": {
           "calcs": [
@@ -578,6 +597,7 @@
           "editorMode": "code",
           "expr": "histogram_quantile(0.50, sum by (le) (rate(pbs_job_running_requested_cpu_cores_distribution_bucket[$__rate_interval])))",
           "legendFormat": "p50",
+          "range": true,
           "refId": "A"
         },
         {
@@ -588,6 +608,7 @@
           "editorMode": "code",
           "expr": "histogram_quantile(0.95, sum by (le) (rate(pbs_job_running_requested_cpu_cores_distribution_bucket[$__rate_interval])))",
           "legendFormat": "p95",
+          "range": true,
           "refId": "B"
         }
       ],
@@ -612,6 +633,7 @@
             "axisLabel": "bytes",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 18,
             "gradientMode": "opacity",
@@ -628,6 +650,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -644,7 +667,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -659,6 +682,7 @@
         "y": 6
       },
       "id": 10,
+      "interval": "3m",
       "options": {
         "legend": {
           "calcs": [
@@ -718,6 +742,7 @@
             "axisLabel": "seconds",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 18,
             "gradientMode": "opacity",
@@ -734,6 +759,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -750,7 +776,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -765,6 +791,7 @@
         "y": 6
       },
       "id": 11,
+      "interval": "3m",
       "options": {
         "legend": {
           "calcs": [
@@ -821,8 +848,10 @@
             "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
+            "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 12,
             "gradientMode": "opacity",
@@ -839,6 +868,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -855,7 +885,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -870,6 +900,7 @@
         "y": 14
       },
       "id": 12,
+      "interval": "3m",
       "options": {
         "legend": {
           "calcs": [
@@ -947,17 +978,10 @@
               "legend": false,
               "tooltip": false,
               "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
             }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
           },
           "unit": "short"
         },
@@ -970,6 +994,7 @@
         "y": 22
       },
       "id": 14,
+      "interval": "3m",
       "options": {
         "calculate": false,
         "cellGap": 2,
@@ -981,6 +1006,7 @@
           "fill": "dark-orange",
           "mode": "scheme",
           "reverse": false,
+          "scale": "exponential",
           "scheme": "Spectral",
           "steps": 64
         },
@@ -988,7 +1014,7 @@
           "color": "rgba(255,0,255,0.7)"
         },
         "filterValues": {
-          "le": 1e-09
+          "le": 1e-9
         },
         "legend": {
           "show": true
@@ -1000,6 +1026,10 @@
           "mode": "single",
           "showColorScale": false,
           "yHistogram": false
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "reverse": false
         }
       },
       "pluginVersion": "12.3.0",
@@ -1011,7 +1041,8 @@
           },
           "editorMode": "code",
           "expr": "sum by (le) (increase(pbs_job_running_requested_cpu_cores_distribution_bucket[$__rate_interval]))",
-          "legendFormat": "<= {{le}} cores",
+          "legendFormat": "{{le}}",
+          "range": true,
           "refId": "A"
         }
       ],
@@ -1031,17 +1062,10 @@
               "legend": false,
               "tooltip": false,
               "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
             }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
           },
           "unit": "short"
         },
@@ -1054,6 +1078,7 @@
         "y": 22
       },
       "id": 15,
+      "interval": "3m",
       "options": {
         "calculate": false,
         "cellGap": 2,
@@ -1065,6 +1090,7 @@
           "fill": "dark-orange",
           "mode": "scheme",
           "reverse": false,
+          "scale": "exponential",
           "scheme": "Turbo",
           "steps": 64
         },
@@ -1072,7 +1098,7 @@
           "color": "rgba(255,0,255,0.7)"
         },
         "filterValues": {
-          "le": 1e-09
+          "le": 1e-9
         },
         "legend": {
           "show": true
@@ -1084,6 +1110,11 @@
           "mode": "single",
           "showColorScale": false,
           "yHistogram": false
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "reverse": false,
+          "unit": "bytes"
         }
       },
       "pluginVersion": "12.3.0",
@@ -1095,7 +1126,9 @@
           },
           "editorMode": "code",
           "expr": "sum by (le) (increase(pbs_job_running_requested_memory_bytes_distribution_bucket[$__rate_interval]))",
-          "legendFormat": "<= {{le}} bytes",
+          "interval": "",
+          "legendFormat": "{{le}}",
+          "range": true,
           "refId": "A"
         }
       ],
@@ -1115,17 +1148,10 @@
               "legend": false,
               "tooltip": false,
               "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
             }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
           },
           "unit": "short"
         },
@@ -1138,6 +1164,7 @@
         "y": 22
       },
       "id": 16,
+      "interval": "3m",
       "options": {
         "calculate": false,
         "cellGap": 2,
@@ -1149,6 +1176,7 @@
           "fill": "dark-orange",
           "mode": "scheme",
           "reverse": false,
+          "scale": "exponential",
           "scheme": "Viridis",
           "steps": 64
         },
@@ -1156,7 +1184,7 @@
           "color": "rgba(255,0,255,0.7)"
         },
         "filterValues": {
-          "le": 1e-09
+          "le": 1e-9
         },
         "legend": {
           "show": true
@@ -1168,6 +1196,11 @@
           "mode": "single",
           "showColorScale": false,
           "yHistogram": false
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "reverse": false,
+          "unit": "s"
         }
       },
       "pluginVersion": "12.3.0",
@@ -1179,7 +1212,8 @@
           },
           "editorMode": "code",
           "expr": "sum by (le) (increase(pbs_job_running_requested_walltime_seconds_distribution_bucket[$__rate_interval]))",
-          "legendFormat": "<= {{le}}s",
+          "legendFormat": "{{le}}",
+          "range": true,
           "refId": "A"
         }
       ],
@@ -1199,17 +1233,10 @@
               "legend": false,
               "tooltip": false,
               "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
             }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
           },
           "unit": "short"
         },
@@ -1222,6 +1249,7 @@
         "y": 30
       },
       "id": 17,
+      "interval": "3m",
       "options": {
         "calculate": false,
         "cellGap": 2,
@@ -1233,6 +1261,7 @@
           "fill": "dark-orange",
           "mode": "scheme",
           "reverse": false,
+          "scale": "exponential",
           "scheme": "Spectral",
           "steps": 64
         },
@@ -1240,7 +1269,7 @@
           "color": "rgba(255,0,255,0.7)"
         },
         "filterValues": {
-          "le": 1e-09
+          "le": 1e-9
         },
         "legend": {
           "show": true
@@ -1252,6 +1281,10 @@
           "mode": "single",
           "showColorScale": false,
           "yHistogram": false
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "reverse": false
         }
       },
       "pluginVersion": "12.3.0",
@@ -1263,7 +1296,8 @@
           },
           "editorMode": "code",
           "expr": "sum by (le) (increase(pbs_job_running_requested_mpi_processes_distribution_bucket[$__rate_interval]))",
-          "legendFormat": "<= {{le}} MPI",
+          "legendFormat": "{{le}}",
+          "range": true,
           "refId": "A"
         }
       ],
@@ -1283,17 +1317,10 @@
               "legend": false,
               "tooltip": false,
               "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
             }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
           },
           "unit": "short"
         },
@@ -1306,6 +1333,7 @@
         "y": 30
       },
       "id": 18,
+      "interval": "3m",
       "options": {
         "calculate": false,
         "cellGap": 2,
@@ -1317,6 +1345,7 @@
           "fill": "dark-orange",
           "mode": "scheme",
           "reverse": false,
+          "scale": "exponential",
           "scheme": "Turbo",
           "steps": 64
         },
@@ -1324,7 +1353,7 @@
           "color": "rgba(255,0,255,0.7)"
         },
         "filterValues": {
-          "le": 1e-09
+          "le": 1e-9
         },
         "legend": {
           "show": true
@@ -1336,6 +1365,10 @@
           "mode": "single",
           "showColorScale": false,
           "yHistogram": false
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "reverse": false
         }
       },
       "pluginVersion": "12.3.0",
@@ -1347,7 +1380,8 @@
           },
           "editorMode": "code",
           "expr": "sum by (le) (increase(pbs_job_running_requested_nodes_distribution_bucket[$__rate_interval]))",
-          "legendFormat": "<= {{le}} nodes",
+          "legendFormat": "{{le}}",
+          "range": true,
           "refId": "A"
         }
       ],
@@ -1367,17 +1401,10 @@
               "legend": false,
               "tooltip": false,
               "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
             }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
           },
           "unit": "short"
         },
@@ -1390,6 +1417,7 @@
         "y": 30
       },
       "id": 19,
+      "interval": "3m",
       "options": {
         "calculate": false,
         "cellGap": 2,
@@ -1401,6 +1429,7 @@
           "fill": "dark-orange",
           "mode": "scheme",
           "reverse": false,
+          "scale": "exponential",
           "scheme": "Viridis",
           "steps": 64
         },
@@ -1408,7 +1437,7 @@
           "color": "rgba(255,0,255,0.7)"
         },
         "filterValues": {
-          "le": 1e-09
+          "le": 1e-9
         },
         "legend": {
           "show": true
@@ -1420,6 +1449,10 @@
           "mode": "single",
           "showColorScale": false,
           "yHistogram": false
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "reverse": false
         }
       },
       "pluginVersion": "12.3.0",
@@ -1431,7 +1464,8 @@
           },
           "editorMode": "code",
           "expr": "sum by (le) (increase(pbs_job_running_requested_gpu_devices_distribution_bucket[$__rate_interval]))",
-          "legendFormat": "<= {{le}} GPUs",
+          "legendFormat": "{{le}}",
+          "range": true,
           "refId": "A"
         }
       ],
@@ -1468,6 +1502,9 @@
               "mode": "gradient",
               "type": "color-background"
             },
+            "footer": {
+              "reducers": []
+            },
             "inspect": false
           },
           "decimals": 1,
@@ -1479,13 +1516,26 @@
             "steps": [
               {
                 "color": "blue",
-                "value": null
+                "value": 0
               }
             ]
           },
           "unit": "percent"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Bucket (<=)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "string"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -1504,7 +1554,13 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Bucket (<=)"
+          }
+        ]
       },
       "pluginVersion": "12.3.0",
       "targets": [
@@ -1522,6 +1578,40 @@
         }
       ],
       "title": "CPU Cumulative Share",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "Value": "Percent",
+              "le": "Bucket (<=)"
+            }
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "+Inf"
+                  }
+                },
+                "fieldName": "Bucket (<=)"
+              }
+            ],
+            "match": "any",
+            "type": "exclude"
+          }
+        }
+      ],
       "type": "table"
     },
     {
@@ -1541,6 +1631,9 @@
               "mode": "gradient",
               "type": "color-background"
             },
+            "footer": {
+              "reducers": []
+            },
             "inspect": false
           },
           "decimals": 1,
@@ -1552,13 +1645,26 @@
             "steps": [
               {
                 "color": "blue",
-                "value": null
+                "value": 0
               }
             ]
           },
           "unit": "percent"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Bucket (<=)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -1577,7 +1683,13 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Bucket (<=)"
+          }
+        ]
       },
       "pluginVersion": "12.3.0",
       "targets": [
@@ -1595,6 +1707,40 @@
         }
       ],
       "title": "Memory Cumulative Share",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "Value": "Percent",
+              "le": "Bucket (<=)"
+            }
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "+Inf"
+                  }
+                },
+                "fieldName": "Bucket (<=)"
+              }
+            ],
+            "match": "any",
+            "type": "exclude"
+          }
+        }
+      ],
       "type": "table"
     },
     {
@@ -1614,6 +1760,9 @@
               "mode": "gradient",
               "type": "color-background"
             },
+            "footer": {
+              "reducers": []
+            },
             "inspect": false
           },
           "decimals": 1,
@@ -1625,13 +1774,26 @@
             "steps": [
               {
                 "color": "blue",
-                "value": null
+                "value": 0
               }
             ]
           },
           "unit": "percent"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Bucket (<=)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -1668,6 +1830,40 @@
         }
       ],
       "title": "Walltime Cumulative Share",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "Value": "Percent ",
+              "le": "Bucket (<=)"
+            }
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "+Inf"
+                  }
+                },
+                "fieldName": "Bucket (<=)"
+              }
+            ],
+            "match": "any",
+            "type": "exclude"
+          }
+        }
+      ],
       "type": "table"
     },
     {
@@ -1700,6 +1896,9 @@
               "mode": "gradient",
               "type": "color-background"
             },
+            "footer": {
+              "reducers": []
+            },
             "inspect": false
           },
           "decimals": 1,
@@ -1711,13 +1910,26 @@
             "steps": [
               {
                 "color": "blue",
-                "value": null
+                "value": 0
               }
             ]
           },
           "unit": "percent"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Bucket (<=)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -1736,7 +1948,13 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Bucket (<=)"
+          }
+        ]
       },
       "pluginVersion": "12.3.0",
       "targets": [
@@ -1754,6 +1972,40 @@
         }
       ],
       "title": "MPI Cumulative Share",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "Value": "Percent",
+              "le": "Bucket (<=)"
+            }
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "+Inf"
+                  }
+                },
+                "fieldName": "Bucket (<=)"
+              }
+            ],
+            "match": "any",
+            "type": "exclude"
+          }
+        }
+      ],
       "type": "table"
     },
     {
@@ -1773,6 +2025,9 @@
               "mode": "gradient",
               "type": "color-background"
             },
+            "footer": {
+              "reducers": []
+            },
             "inspect": false
           },
           "decimals": 1,
@@ -1784,13 +2039,26 @@
             "steps": [
               {
                 "color": "blue",
-                "value": null
+                "value": 0
               }
             ]
           },
           "unit": "percent"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Bucket (<=)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -1809,7 +2077,13 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Bucket (<=)"
+          }
+        ]
       },
       "pluginVersion": "12.3.0",
       "targets": [
@@ -1827,6 +2101,40 @@
         }
       ],
       "title": "Node Count Cumulative Share",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "Value": "Percent",
+              "le": "Bucket (<=)"
+            }
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "+Inf"
+                  }
+                },
+                "fieldName": "Bucket (<=)"
+              }
+            ],
+            "match": "any",
+            "type": "exclude"
+          }
+        }
+      ],
       "type": "table"
     },
     {
@@ -1846,6 +2154,9 @@
               "mode": "gradient",
               "type": "color-background"
             },
+            "footer": {
+              "reducers": []
+            },
             "inspect": false
           },
           "decimals": 1,
@@ -1857,13 +2168,26 @@
             "steps": [
               {
                 "color": "blue",
-                "value": null
+                "value": 0
               }
             ]
           },
           "unit": "percent"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Bucket (<=)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -1882,7 +2206,13 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Bucket (<=)"
+          }
+        ]
       },
       "pluginVersion": "12.3.0",
       "targets": [
@@ -1900,9 +2230,44 @@
         }
       ],
       "title": "GPU Cumulative Share",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "Value": "Percent",
+              "le": "Bucket (<=)"
+            }
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "+Inf"
+                  }
+                },
+                "fieldName": "Bucket (<=)"
+              }
+            ],
+            "match": "any",
+            "type": "exclude"
+          }
+        }
+      ],
       "type": "table"
     }
   ],
+  "preload": false,
   "refresh": "30s",
   "schemaVersion": 42,
   "tags": [
@@ -1914,10 +2279,6 @@
   "templating": {
     "list": [
       {
-        "current": {
-          "text": "prom",
-          "value": "eeqekyqsk3ny8e"
-        },
         "includeAll": false,
         "label": "Datasource",
         "name": "datasource",
@@ -1930,7 +2291,7 @@
     ]
   },
   "time": {
-    "from": "now-12h",
+    "from": "now-3h",
     "to": "now"
   },
   "timepicker": {
@@ -1946,6 +2307,5 @@
   "timezone": "",
   "title": "PBS Job Requested Resource Distributions",
   "uid": "pbs-job-requested-resource-distributions",
-  "version": 1,
-  "weekStart": ""
+  "version": 4
 }
