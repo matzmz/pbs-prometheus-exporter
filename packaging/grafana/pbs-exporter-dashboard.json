@@ -102,7 +102,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "avg_over_time(((100 * sum(pbs_cluster_cpu_cores{state=\"used\"}) / clamp_min(sum(pbs_cluster_cpu_cores{state=\"total\"}), 1)))[$__range:])",
+          "expr": "avg_over_time(((100 * sum(pbs_cluster_cpu_cores{prom_group_name=~\"$clustername\",state=\"used\"}) / clamp_min(sum(pbs_cluster_cpu_cores{prom_group_name=~\"$clustername\",state=\"total\"}), 1)))[$__range:])",
           "legendFormat": "Average CPU",
           "refId": "A"
         }
@@ -178,7 +178,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max_over_time(((100 * sum(pbs_cluster_cpu_cores{state=\"used\"}) / clamp_min(sum(pbs_cluster_cpu_cores{state=\"total\"}), 1)))[$__range:])",
+          "expr": "max_over_time(((100 * sum(pbs_cluster_cpu_cores{prom_group_name=~\"$clustername\",state=\"used\"}) / clamp_min(sum(pbs_cluster_cpu_cores{prom_group_name=~\"$clustername\",state=\"total\"}), 1)))[$__range:])",
           "legendFormat": "Peak CPU",
           "refId": "A"
         }
@@ -258,7 +258,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "avg_over_time(((100 * sum(pbs_cluster_gpu_devices{state=\"used\"}) / clamp_min(sum(pbs_cluster_gpu_devices{state=\"total\"}), 1)))[$__range:])",
+          "expr": "avg_over_time(((100 * sum(pbs_cluster_gpu_devices{prom_group_name=~\"$clustername\",state=\"used\"}) / clamp_min(sum(pbs_cluster_gpu_devices{prom_group_name=~\"$clustername\",state=\"total\"}), 1)))[$__range:])",
           "legendFormat": "Average GPU",
           "refId": "A"
         }
@@ -338,7 +338,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max_over_time(((100 * sum(pbs_cluster_gpu_devices{state=\"used\"}) / clamp_min(sum(pbs_cluster_gpu_devices{state=\"total\"}), 1)))[$__range:])",
+          "expr": "max_over_time(((100 * sum(pbs_cluster_gpu_devices{prom_group_name=~\"$clustername\",state=\"used\"}) / clamp_min(sum(pbs_cluster_gpu_devices{prom_group_name=~\"$clustername\",state=\"total\"}), 1)))[$__range:])",
           "legendFormat": "Peak GPU",
           "refId": "A"
         }
@@ -411,7 +411,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (state) (pbs_cluster_cpu_cores{state=~\"used|total\"})",
+          "expr": "sum by (state) (pbs_cluster_cpu_cores{prom_group_name=~\"$clustername\",state=~\"used|total\"})",
           "legendFormat": "{{state}}",
           "refId": "A"
         }
@@ -484,7 +484,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (state) (pbs_cluster_gpu_devices{state=~\"used|total\"})",
+          "expr": "sum by (state) (pbs_cluster_gpu_devices{prom_group_name=~\"$clustername\",state=~\"used|total\"})",
           "legendFormat": "{{state}}",
           "refId": "A"
         }
@@ -567,7 +567,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_cluster_cpu_cores{state=\"used\"}) / clamp_min(sum(pbs_cluster_cpu_cores{state=\"total\"}), 1)",
+          "expr": "sum(pbs_cluster_cpu_cores{prom_group_name=~\"$clustername\",state=\"used\"}) / clamp_min(sum(pbs_cluster_cpu_cores{prom_group_name=~\"$clustername\",state=\"total\"}), 1)",
           "legendFormat": "CPU",
           "refId": "A"
         },
@@ -577,7 +577,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_cluster_gpu_devices{state=\"used\"}) / clamp_min(sum(pbs_cluster_gpu_devices{state=\"total\"}), 1)",
+          "expr": "sum(pbs_cluster_gpu_devices{prom_group_name=~\"$clustername\",state=\"used\"}) / clamp_min(sum(pbs_cluster_gpu_devices{prom_group_name=~\"$clustername\",state=\"total\"}), 1)",
           "legendFormat": "GPU",
           "refId": "B"
         },
@@ -587,7 +587,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_cluster_memory_bytes{state=\"used\"}) / clamp_min(sum(pbs_cluster_memory_bytes{state=\"total\"}), 1)",
+          "expr": "sum(pbs_cluster_memory_bytes{prom_group_name=~\"$clustername\",state=\"used\"}) / clamp_min(sum(pbs_cluster_memory_bytes{prom_group_name=~\"$clustername\",state=\"total\"}), 1)",
           "legendFormat": "Memory",
           "refId": "C"
         }
@@ -691,7 +691,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_cluster_cpu_cores{state=\"used\"}) / clamp_min(sum(pbs_cluster_cpu_cores{state=\"total\"}), 1)",
+          "expr": "sum(pbs_cluster_cpu_cores{prom_group_name=~\"$clustername\",state=\"used\"}) / clamp_min(sum(pbs_cluster_cpu_cores{prom_group_name=~\"$clustername\",state=\"total\"}), 1)",
           "legendFormat": "CPU",
           "refId": "A"
         },
@@ -701,7 +701,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_cluster_gpu_devices{state=\"used\"}) / clamp_min(sum(pbs_cluster_gpu_devices{state=\"total\"}), 1)",
+          "expr": "sum(pbs_cluster_gpu_devices{prom_group_name=~\"$clustername\",state=\"used\"}) / clamp_min(sum(pbs_cluster_gpu_devices{prom_group_name=~\"$clustername\",state=\"total\"}), 1)",
           "legendFormat": "GPU",
           "refId": "B"
         },
@@ -711,7 +711,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_cluster_memory_bytes{state=\"used\"}) / clamp_min(sum(pbs_cluster_memory_bytes{state=\"total\"}), 1)",
+          "expr": "sum(pbs_cluster_memory_bytes{prom_group_name=~\"$clustername\",state=\"used\"}) / clamp_min(sum(pbs_cluster_memory_bytes{prom_group_name=~\"$clustername\",state=\"total\"}), 1)",
           "legendFormat": "Memory",
           "refId": "C"
         }
@@ -783,7 +783,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (status) (pbs_jobs)",
+          "expr": "sum by (status) (pbs_jobs{prom_group_name=~\"$clustername\"})",
           "legendFormat": "{{status}}",
           "refId": "A"
         }
@@ -862,7 +862,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_jobs)",
+          "expr": "sum(pbs_jobs{prom_group_name=~\"$clustername\"})",
           "legendFormat": "Total Jobs",
           "refId": "A"
         }
@@ -963,7 +963,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (status) (pbs_jobs)",
+          "expr": "sum by (status) (pbs_jobs{prom_group_name=~\"$clustername\"})",
           "legendFormat": "{{status}}",
           "refId": "A"
         }
@@ -1062,7 +1062,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (queue) (pbs_jobs_running_by_queue)",
+          "expr": "sum by (queue) (pbs_jobs_running_by_queue{prom_group_name=~\"$clustername\"})",
           "legendFormat": "{{queue}} running",
           "refId": "A"
         },
@@ -1072,7 +1072,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (queue) (pbs_jobs_total_by_queue)",
+          "expr": "sum by (queue) (pbs_jobs_total_by_queue{prom_group_name=~\"$clustername\"})",
           "legendFormat": "{{queue}} total",
           "refId": "B"
         }
@@ -1139,7 +1139,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_jobs{status=\"queued\"})",
+          "expr": "sum(pbs_jobs{prom_group_name=~\"$clustername\",status=\"queued\"})",
           "legendFormat": "Queued Jobs",
           "range": true,
           "refId": "A"
@@ -1235,7 +1235,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(20, sum by (queue) (pbs_queue_jobs{state=\"queued\"}))",
+          "expr": "topk(20, sum by (queue) (pbs_queue_jobs{prom_group_name=~\"$clustername\",state=\"queued\"}))",
           "legendFormat": "{{queue}}",
           "refId": "A",
           "instant": true,
@@ -1318,7 +1318,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(20, sum by (queue) (pbs_queue_jobs{state=\"running\"}))",
+          "expr": "topk(20, sum by (queue) (pbs_queue_jobs{prom_group_name=~\"$clustername\",state=\"running\"}))",
           "legendFormat": "{{queue}}",
           "refId": "A",
           "instant": true,
@@ -1411,7 +1411,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "pbs_queue_enabled",
+          "expr": "pbs_queue_enabled{prom_group_name=~\"$clustername\"}",
           "legendFormat": "{{queue}} enabled",
           "refId": "A",
           "instant": true,
@@ -1423,7 +1423,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "pbs_queue_started",
+          "expr": "pbs_queue_started{prom_group_name=~\"$clustername\"}",
           "legendFormat": "{{queue}} started",
           "refId": "B",
           "instant": true,
@@ -1536,7 +1536,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (queue, le) (pbs_queue_job_wait_seconds_bucket))",
+          "expr": "histogram_quantile(0.95, sum by (queue, le) (pbs_queue_job_wait_seconds_bucket{prom_group_name=~\"$clustername\"}))",
           "legendFormat": "{{queue}}",
           "refId": "A"
         }
@@ -1617,7 +1617,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(15, pbs_queue_oldest_job_wait_seconds)",
+          "expr": "topk(15, pbs_queue_oldest_job_wait_seconds{prom_group_name=~\"$clustername\"})",
           "legendFormat": "{{queue}}",
           "refId": "A",
           "instant": true,
@@ -1700,7 +1700,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(clamp_min(pbs_queue_job_wait_seconds_count - ignoring(le) pbs_queue_job_wait_seconds_bucket{le=\"86400\"}, 0))",
+          "expr": "sum(clamp_min(pbs_queue_job_wait_seconds_count{prom_group_name=~\"$clustername\"} - ignoring(le) pbs_queue_job_wait_seconds_bucket{prom_group_name=~\"$clustername\",le=\"86400\"}, 0))",
           "legendFormat": "> 1d",
           "refId": "A",
           "instant": true,
@@ -1712,7 +1712,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(clamp_min(pbs_queue_job_wait_seconds_count - ignoring(le) pbs_queue_job_wait_seconds_bucket{le=\"172800\"}, 0))",
+          "expr": "sum(clamp_min(pbs_queue_job_wait_seconds_count{prom_group_name=~\"$clustername\"} - ignoring(le) pbs_queue_job_wait_seconds_bucket{prom_group_name=~\"$clustername\",le=\"172800\"}, 0))",
           "legendFormat": "> 2d",
           "refId": "B",
           "instant": true,
@@ -1724,7 +1724,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(clamp_min(pbs_queue_job_wait_seconds_count - ignoring(le) pbs_queue_job_wait_seconds_bucket{le=\"432000\"}, 0))",
+          "expr": "sum(clamp_min(pbs_queue_job_wait_seconds_count{prom_group_name=~\"$clustername\"} - ignoring(le) pbs_queue_job_wait_seconds_bucket{prom_group_name=~\"$clustername\",le=\"432000\"}, 0))",
           "legendFormat": "> 5d",
           "refId": "C",
           "instant": true,
@@ -1788,7 +1788,7 @@
           "color": "rgba(255,0,255,0.7)"
         },
         "filterValues": {
-          "le": 1e-09
+          "le": 1e-9
         },
         "legend": {
           "show": true
@@ -1810,7 +1810,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (le) (pbs_queue_job_wait_seconds_bucket)",
+          "expr": "sum by (le) (pbs_queue_job_wait_seconds_bucket{prom_group_name=~\"$clustername\"})",
           "legendFormat": "<= {{le}}s",
           "refId": "A"
         }
@@ -1891,7 +1891,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(20, pbs_queue_job_wait_seconds_sum / clamp_min(pbs_queue_job_wait_seconds_count, 1))",
+          "expr": "topk(20, pbs_queue_job_wait_seconds_sum{prom_group_name=~\"$clustername\"} / clamp_min(pbs_queue_job_wait_seconds_count{prom_group_name=~\"$clustername\"}, 1))",
           "legendFormat": "{{queue}}",
           "refId": "A",
           "instant": true,
@@ -2005,7 +2005,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(10, pbs_jobs_running_by_user)",
+          "expr": "topk(10, pbs_jobs_running_by_user{prom_group_name=~\"$clustername\"})",
           "legendFormat": "{{user}}",
           "range": true,
           "refId": "A"
@@ -2106,7 +2106,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(10, pbs_jobs_queued_by_user)",
+          "expr": "topk(10, pbs_jobs_queued_by_user{prom_group_name=~\"$clustername\"})",
           "legendFormat": "{{user}}",
           "refId": "A"
         }
@@ -2191,7 +2191,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (state) (pbs_nodes)",
+          "expr": "sum by (state) (pbs_nodes{prom_group_name=~\"$clustername\"})",
           "legendFormat": "{{state}}",
           "refId": "A"
         }
@@ -2268,7 +2268,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_cluster_cpu_cores{state=\"used\"}) / clamp_min(sum(pbs_cluster_cpu_cores{state=\"total\"}), 1)",
+          "expr": "sum(pbs_cluster_cpu_cores{prom_group_name=~\"$clustername\",state=\"used\"}) / clamp_min(sum(pbs_cluster_cpu_cores{prom_group_name=~\"$clustername\",state=\"total\"}), 1)",
           "legendFormat": "CPU",
           "refId": "A",
           "instant": true,
@@ -2280,7 +2280,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_cluster_gpu_devices{state=\"used\"}) / clamp_min(sum(pbs_cluster_gpu_devices{state=\"total\"}), 1)",
+          "expr": "sum(pbs_cluster_gpu_devices{prom_group_name=~\"$clustername\",state=\"used\"}) / clamp_min(sum(pbs_cluster_gpu_devices{prom_group_name=~\"$clustername\",state=\"total\"}), 1)",
           "legendFormat": "GPU",
           "refId": "B",
           "instant": true,
@@ -2292,7 +2292,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_cluster_memory_bytes{state=\"used\"}) / clamp_min(sum(pbs_cluster_memory_bytes{state=\"total\"}), 1)",
+          "expr": "sum(pbs_cluster_memory_bytes{prom_group_name=~\"$clustername\",state=\"used\"}) / clamp_min(sum(pbs_cluster_memory_bytes{prom_group_name=~\"$clustername\",state=\"total\"}), 1)",
           "legendFormat": "Memory",
           "refId": "C",
           "instant": true,
@@ -2377,7 +2377,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(20, pbs_node_cpu_utilization_ratio)",
+          "expr": "topk(20, pbs_node_cpu_utilization_ratio{prom_group_name=~\"$clustername\"})",
           "legendFormat": "{{node}}",
           "refId": "A",
           "instant": true,
@@ -2462,7 +2462,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(20, pbs_node_gpu_utilization_ratio)",
+          "expr": "topk(20, pbs_node_gpu_utilization_ratio{prom_group_name=~\"$clustername\"})",
           "legendFormat": "{{node}}",
           "refId": "A",
           "instant": true,
@@ -2547,7 +2547,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(20, pbs_node_memory_utilization_ratio)",
+          "expr": "topk(20, pbs_node_memory_utilization_ratio{prom_group_name=~\"$clustername\"})",
           "legendFormat": "{{node}}",
           "refId": "A",
           "instant": true,
@@ -2645,7 +2645,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "pbs_exporter_up",
+          "expr": "pbs_exporter_up{prom_group_name=~\"$clustername\"}",
           "legendFormat": "Exporter Up",
           "refId": "A"
         }
@@ -2714,7 +2714,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "pbs_exporter_last_collect_duration_seconds",
+          "expr": "pbs_exporter_last_collect_duration_seconds{prom_group_name=~\"$clustername\"}",
           "legendFormat": "Last Collect Duration",
           "refId": "A"
         }
@@ -2813,7 +2813,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "pbs_exporter_last_collect_duration_seconds",
+          "expr": "pbs_exporter_last_collect_duration_seconds{prom_group_name=~\"$clustername\"}",
           "legendFormat": "Collect Duration",
           "refId": "A"
         },
@@ -2823,7 +2823,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "time() - pbs_exporter_snapshot_timestamp_seconds",
+          "expr": "time() - pbs_exporter_snapshot_timestamp_seconds{prom_group_name=~\"$clustername\"}",
           "legendFormat": "Snapshot Age",
           "refId": "B"
         }
@@ -2892,7 +2892,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "pbs_exporter_collect_errors_total",
+          "expr": "pbs_exporter_collect_errors_total{prom_group_name=~\"$clustername\"}",
           "legendFormat": "Collect Errors",
           "refId": "A"
         }
@@ -2962,7 +2962,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "time() - pbs_exporter_last_collect_success_timestamp_seconds",
+          "expr": "time() - pbs_exporter_last_collect_success_timestamp_seconds{prom_group_name=~\"$clustername\"}",
           "legendFormat": "Age Since Last Success",
           "refId": "A"
         }
@@ -2994,6 +2994,31 @@
         "refresh": 1,
         "regex": "",
         "type": "datasource"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "label_values(pbs_exporter_up, prom_group_name)",
+        "includeAll": true,
+        "label": "Cluster name",
+        "multi": true,
+        "name": "clustername",
+        "options": [],
+        "query": {
+          "query": "label_values(pbs_exporter_up, prom_group_name)",
+          "refId": "PrometheusVariableQueryEditor-clustername"
+        },
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
       }
     ]
   },

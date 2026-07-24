@@ -101,7 +101,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "100 * sum(pbs_cluster_cpu_cores{state=\"used\"}) / clamp_min(sum(pbs_cluster_cpu_cores{state=\"total\"}), 1)",
+          "expr": "100 * sum(pbs_cluster_cpu_cores{prom_group_name=~\"$clustername\",state=\"used\"}) / clamp_min(sum(pbs_cluster_cpu_cores{prom_group_name=~\"$clustername\",state=\"total\"}), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "value",
@@ -178,7 +178,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "100 * sum(pbs_cluster_gpu_devices{state=\"used\"}) / clamp_min(sum(pbs_cluster_gpu_devices{state=\"total\"}), 1)",
+          "expr": "100 * sum(pbs_cluster_gpu_devices{prom_group_name=~\"$clustername\",state=\"used\"}) / clamp_min(sum(pbs_cluster_gpu_devices{prom_group_name=~\"$clustername\",state=\"total\"}), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "value",
@@ -255,7 +255,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "100 * sum(pbs_cluster_memory_bytes{state=\"used\"}) / clamp_min(sum(pbs_cluster_memory_bytes{state=\"total\"}), 1)",
+          "expr": "100 * sum(pbs_cluster_memory_bytes{prom_group_name=~\"$clustername\",state=\"used\"}) / clamp_min(sum(pbs_cluster_memory_bytes{prom_group_name=~\"$clustername\",state=\"total\"}), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "value",
@@ -332,7 +332,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_job_info{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=\"R\"})",
+          "expr": "sum(pbs_job_info{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=\"R\"})",
           "format": "time_series",
           "instant": true,
           "legendFormat": "value",
@@ -409,7 +409,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_job_info{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=\"Q\"})",
+          "expr": "sum(pbs_job_info{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=\"Q\"})",
           "format": "time_series",
           "instant": true,
           "legendFormat": "value",
@@ -486,7 +486,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_job_requested_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
+          "expr": "sum(pbs_job_requested_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
           "format": "time_series",
           "instant": true,
           "legendFormat": "value",
@@ -563,7 +563,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_job_requested_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
+          "expr": "sum(pbs_job_requested_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
           "format": "time_series",
           "instant": true,
           "legendFormat": "value",
@@ -640,7 +640,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (pbs_queue_job_wait_seconds_bucket{queue=~\"$queue\"}))",
+          "expr": "histogram_quantile(0.95, sum by (le) (pbs_queue_job_wait_seconds_bucket{prom_group_name=~\"$clustername\",queue=~\"$queue\"}))",
           "format": "time_series",
           "instant": true,
           "legendFormat": "value",
@@ -752,7 +752,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "100 * sum(pbs_cluster_cpu_cores{state=\"used\"}) / clamp_min(sum(pbs_cluster_cpu_cores{state=\"total\"}), 1)",
+          "expr": "100 * sum(pbs_cluster_cpu_cores{prom_group_name=~\"$clustername\",state=\"used\"}) / clamp_min(sum(pbs_cluster_cpu_cores{prom_group_name=~\"$clustername\",state=\"total\"}), 1)",
           "format": "time_series",
           "legendFormat": "CPU",
           "range": true,
@@ -764,7 +764,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "100 * sum(pbs_cluster_gpu_devices{state=\"used\"}) / clamp_min(sum(pbs_cluster_gpu_devices{state=\"total\"}), 1)",
+          "expr": "100 * sum(pbs_cluster_gpu_devices{prom_group_name=~\"$clustername\",state=\"used\"}) / clamp_min(sum(pbs_cluster_gpu_devices{prom_group_name=~\"$clustername\",state=\"total\"}), 1)",
           "format": "time_series",
           "legendFormat": "GPU",
           "range": true,
@@ -776,7 +776,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "100 * sum(pbs_cluster_memory_bytes{state=\"used\"}) / clamp_min(sum(pbs_cluster_memory_bytes{state=\"total\"}), 1)",
+          "expr": "100 * sum(pbs_cluster_memory_bytes{prom_group_name=~\"$clustername\",state=\"used\"}) / clamp_min(sum(pbs_cluster_memory_bytes{prom_group_name=~\"$clustername\",state=\"total\"}), 1)",
           "format": "time_series",
           "legendFormat": "Memory",
           "range": true,
@@ -853,7 +853,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum by (job_state) (pbs_job_info{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
+          "expr": "sum by (job_state) (pbs_job_info{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
           "format": "time_series",
           "legendFormat": "{{job_state}}",
           "range": true,
@@ -938,7 +938,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_job_requested_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
+          "expr": "sum(pbs_job_requested_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
           "format": "time_series",
           "legendFormat": "CPU requested",
           "range": true,
@@ -950,7 +950,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_job_used_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
+          "expr": "sum(pbs_job_used_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
           "format": "time_series",
           "legendFormat": "CPU allocated",
           "range": true,
@@ -962,7 +962,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_job_ncpusrealusage{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
+          "expr": "sum(pbs_job_ncpusrealusage{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
           "format": "time_series",
           "hide": false,
           "legendFormat": "CPU real used",
@@ -975,7 +975,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_job_requested_gpu_devices{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
+          "expr": "sum(pbs_job_requested_gpu_devices{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
           "format": "time_series",
           "legendFormat": "GPU requested",
           "range": true,
@@ -987,7 +987,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_job_used_gpu_devices{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
+          "expr": "sum(pbs_job_used_gpu_devices{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
           "format": "time_series",
           "legendFormat": "GPU used",
           "range": true,
@@ -1086,7 +1086,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) == 1)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) == 1)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "hide": false,
           "instant": true,
@@ -1100,7 +1100,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 1) and (max_over_time(pbs_job_requested_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 4))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 1) and (max_over_time(pbs_job_requested_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 4))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "hide": false,
           "instant": true,
@@ -1114,7 +1114,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 4) and (max_over_time(pbs_job_requested_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 16))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 4) and (max_over_time(pbs_job_requested_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 16))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "hide": false,
           "instant": true,
@@ -1128,7 +1128,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 16) and (max_over_time(pbs_job_requested_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 64))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 16) and (max_over_time(pbs_job_requested_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 64))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "hide": false,
           "instant": true,
@@ -1143,7 +1143,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 64)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 64)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "hide": false,
           "instant": true,
@@ -1230,7 +1230,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_gpu_devices{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) == 0)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_gpu_devices{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_gpu_devices{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) == 0)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_gpu_devices{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "0 GPU",
@@ -1243,7 +1243,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_gpu_devices{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) == 1)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_gpu_devices{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_gpu_devices{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) == 1)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_gpu_devices{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "1 GPU",
@@ -1256,7 +1256,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_gpu_devices{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) == 2)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_gpu_devices{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_gpu_devices{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) == 2)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_gpu_devices{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "2 GPU",
@@ -1269,7 +1269,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_gpu_devices{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 2) and (max_over_time(pbs_job_requested_gpu_devices{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 4))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_gpu_devices{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_gpu_devices{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 2) and (max_over_time(pbs_job_requested_gpu_devices{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 4))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_gpu_devices{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "3-4 GPU",
@@ -1282,7 +1282,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_gpu_devices{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 4)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_gpu_devices{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_gpu_devices{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 4)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_gpu_devices{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": ">4 GPU",
@@ -1368,7 +1368,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 4294967296)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 4294967296)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "<=4 GiB",
@@ -1381,7 +1381,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 4294967296) and (max_over_time(pbs_job_requested_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 17179869184))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 4294967296) and (max_over_time(pbs_job_requested_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 17179869184))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "4-16 GiB",
@@ -1394,7 +1394,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 17179869184) and (max_over_time(pbs_job_requested_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 68719476736))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 17179869184) and (max_over_time(pbs_job_requested_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 68719476736))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "16-64 GiB",
@@ -1407,7 +1407,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 68719476736) and (max_over_time(pbs_job_requested_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 274877906944))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 68719476736) and (max_over_time(pbs_job_requested_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 274877906944))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "64-256 GiB",
@@ -1420,7 +1420,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 274877906944)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 274877906944)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": ">256 GiB",
@@ -1506,7 +1506,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_walltime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 3600)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_walltime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_walltime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 3600)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_walltime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "<=1h",
@@ -1519,7 +1519,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_walltime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 3600) and (max_over_time(pbs_job_requested_walltime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 21600))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_walltime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_walltime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 3600) and (max_over_time(pbs_job_requested_walltime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 21600))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_walltime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "1-6h",
@@ -1532,7 +1532,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_walltime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 21600) and (max_over_time(pbs_job_requested_walltime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 86400))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_walltime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_walltime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 21600) and (max_over_time(pbs_job_requested_walltime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 86400))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_walltime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "6-24h",
@@ -1545,7 +1545,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_walltime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 86400) and (max_over_time(pbs_job_requested_walltime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 172800))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_walltime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_walltime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 86400) and (max_over_time(pbs_job_requested_walltime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 172800))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_walltime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "1-2d",
@@ -1558,7 +1558,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_walltime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 172800)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_walltime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_walltime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 172800)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_walltime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": ">2d",
@@ -1644,7 +1644,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_nodes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) == 1)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_nodes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_nodes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) == 1)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_nodes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "1 node",
@@ -1657,7 +1657,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_nodes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) == 2)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_nodes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_nodes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) == 2)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_nodes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "2 nodes",
@@ -1670,7 +1670,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_nodes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 2) and (max_over_time(pbs_job_requested_nodes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 4))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_nodes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_nodes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 2) and (max_over_time(pbs_job_requested_nodes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 4))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_nodes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "3-4 nodes",
@@ -1683,7 +1683,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_nodes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 4) and (max_over_time(pbs_job_requested_nodes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 8))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_nodes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_nodes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 4) and (max_over_time(pbs_job_requested_nodes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 8))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_nodes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "5-8 nodes",
@@ -1696,7 +1696,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_nodes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 8)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_nodes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_nodes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 8)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_nodes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": ">8 nodes",
@@ -1782,7 +1782,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_mpi_processes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 1)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_mpi_processes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_mpi_processes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 1)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_mpi_processes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "0-1 proc",
@@ -1795,7 +1795,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_mpi_processes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 1) and (max_over_time(pbs_job_requested_mpi_processes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 8))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_mpi_processes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_mpi_processes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 1) and (max_over_time(pbs_job_requested_mpi_processes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 8))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_mpi_processes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "2-8 proc",
@@ -1808,7 +1808,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_mpi_processes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 8) and (max_over_time(pbs_job_requested_mpi_processes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 32))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_mpi_processes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_mpi_processes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 8) and (max_over_time(pbs_job_requested_mpi_processes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 32))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_mpi_processes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "9-32 proc",
@@ -1821,7 +1821,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_mpi_processes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 32) and (max_over_time(pbs_job_requested_mpi_processes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 128))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_mpi_processes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) ((max_over_time(pbs_job_requested_mpi_processes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 32) and (max_over_time(pbs_job_requested_mpi_processes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) <= 128))) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_mpi_processes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "33-128 proc",
@@ -1834,7 +1834,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_mpi_processes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 128)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_mpi_processes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
+          "expr": "count(count by (job_id) (max_over_time(pbs_job_requested_mpi_processes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]) > 128)) / clamp_min(count(count by (job_id) (max_over_time(pbs_job_requested_mpi_processes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\"}[$__range]))), 1)",
           "format": "time_series",
           "instant": true,
           "legendFormat": ">128 proc",
@@ -1924,7 +1924,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "100 * avg(pbs_job_ncpusrealusage{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"} / clamp_min(pbs_job_requested_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}, 1))",
+          "expr": "100 * avg(pbs_job_ncpusrealusage{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"} / clamp_min(pbs_job_requested_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}, 1))",
           "format": "time_series",
           "instant": true,
           "legendFormat": "value",
@@ -2001,7 +2001,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "100 * avg(pbs_job_used_walltime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"} / clamp_min(pbs_job_requested_walltime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}, 1))",
+          "expr": "100 * avg(pbs_job_used_walltime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"} / clamp_min(pbs_job_requested_walltime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}, 1))",
           "format": "time_series",
           "instant": true,
           "legendFormat": "value",
@@ -2078,7 +2078,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "100 * avg(pbs_job_used_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"} / clamp_min(pbs_job_requested_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}, 1))",
+          "expr": "100 * avg(pbs_job_used_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"} / clamp_min(pbs_job_requested_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}, 1))",
           "format": "time_series",
           "instant": true,
           "legendFormat": "value",
@@ -2155,7 +2155,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "avg(pbs_job_queue_wait_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
+          "expr": "avg(pbs_job_queue_wait_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
           "format": "time_series",
           "instant": true,
           "legendFormat": "value",
@@ -2232,7 +2232,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "max(pbs_job_runtime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
+          "expr": "max(pbs_job_runtime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
           "format": "time_series",
           "instant": true,
           "legendFormat": "value",
@@ -2309,7 +2309,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "max(pbs_job_queue_wait_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
+          "expr": "max(pbs_job_queue_wait_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
           "format": "time_series",
           "instant": true,
           "legendFormat": "value",
@@ -2418,7 +2418,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_job_requested_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
+          "expr": "sum(pbs_job_requested_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
           "format": "time_series",
           "legendFormat": "requested",
           "range": true,
@@ -2430,7 +2430,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_job_ncpusrealusage{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
+          "expr": "sum(pbs_job_ncpusrealusage{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
           "format": "time_series",
           "legendFormat": "used",
           "range": true,
@@ -2538,7 +2538,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_job_requested_walltime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
+          "expr": "sum(pbs_job_requested_walltime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
           "format": "time_series",
           "legendFormat": "requested",
           "range": true,
@@ -2550,7 +2550,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_job_used_walltime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
+          "expr": "sum(pbs_job_used_walltime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
           "format": "time_series",
           "legendFormat": "used",
           "range": true,
@@ -2658,7 +2658,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_job_requested_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
+          "expr": "sum(pbs_job_requested_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
           "format": "time_series",
           "legendFormat": "requested",
           "range": true,
@@ -2670,7 +2670,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_job_used_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
+          "expr": "sum(pbs_job_used_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"})",
           "format": "time_series",
           "legendFormat": "used",
           "range": true,
@@ -2757,7 +2757,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "topk(20, clamp_min(pbs_job_requested_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"} - pbs_job_ncpusrealusage{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"}, 0))",
+          "expr": "topk(20, clamp_min(pbs_job_requested_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"} - pbs_job_ncpusrealusage{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"}, 0))",
           "format": "time_series",
           "instant": false,
           "legendFormat": "{{job_owner}} / {{job_id}}",
@@ -2843,7 +2843,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "topk(20, clamp_min(pbs_job_requested_walltime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"} - pbs_job_used_walltime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"}, 0))",
+          "expr": "topk(20, clamp_min(pbs_job_requested_walltime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"} - pbs_job_used_walltime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"}, 0))",
           "format": "time_series",
           "legendFormat": "{{job_owner}} / {{job_id}}",
           "range": true,
@@ -2928,7 +2928,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "topk(20, clamp_min(pbs_job_requested_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"} - pbs_job_used_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"}, 0))",
+          "expr": "topk(20, clamp_min(pbs_job_requested_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"} - pbs_job_used_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"}, 0))",
           "format": "time_series",
           "legendFormat": "{{job_owner}} / {{job_id}}",
           "range": true,
@@ -3026,7 +3026,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "topk(20, sum by (job_owner) (pbs_job_info{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}))",
+          "expr": "topk(20, sum by (job_owner) (pbs_job_info{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}))",
           "format": "time_series",
           "legendFormat": "{{job_owner}}",
           "range": true,
@@ -3111,7 +3111,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "topk(20, sum by (job_owner) (pbs_job_requested_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}))",
+          "expr": "topk(20, sum by (job_owner) (pbs_job_requested_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}))",
           "format": "time_series",
           "legendFormat": "{{job_owner}}",
           "range": true,
@@ -3196,7 +3196,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "topk(20, sum by (job_owner) (pbs_job_requested_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}))",
+          "expr": "topk(20, sum by (job_owner) (pbs_job_requested_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}))",
           "format": "time_series",
           "legendFormat": "{{job_owner}}",
           "range": true,
@@ -3283,7 +3283,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "topk(20, 100 * avg by (job_owner) (clamp_min(pbs_job_ncpusrealusage{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"}, 1)/pbs_job_used_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"}))",
+          "expr": "topk(20, 100 * avg by (job_owner) (clamp_min(pbs_job_ncpusrealusage{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"}, 1)/pbs_job_used_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"}))",
           "format": "time_series",
           "legendFormat": "{{job_owner}}",
           "range": true,
@@ -3370,7 +3370,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "topk(20, 100 * avg by (job_owner) (pbs_job_used_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"}/clamp_min(pbs_job_requested_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"}, 1)))",
+          "expr": "topk(20, 100 * avg by (job_owner) (pbs_job_used_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"}/clamp_min(pbs_job_requested_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"R\"}, 1)))",
           "format": "time_series",
           "legendFormat": "{{job_owner}}",
           "range": true,
@@ -3455,7 +3455,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "topk(20, avg by (job_owner) (pbs_job_queue_wait_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}))",
+          "expr": "topk(20, avg by (job_owner) (pbs_job_queue_wait_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}))",
           "format": "time_series",
           "legendFormat": "{{job_owner}}",
           "range": true,
@@ -3553,7 +3553,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "topk(20, sum by (queue) (pbs_job_info{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}))",
+          "expr": "topk(20, sum by (queue) (pbs_job_info{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}))",
           "format": "time_series",
           "legendFormat": "{{queue}}",
           "range": true,
@@ -3638,7 +3638,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "topk(20, sum by (queue) (pbs_job_requested_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}))",
+          "expr": "topk(20, sum by (queue) (pbs_job_requested_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}))",
           "format": "time_series",
           "legendFormat": "{{queue}}",
           "range": true,
@@ -3723,7 +3723,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "topk(20, sum by (project) (pbs_job_requested_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}))",
+          "expr": "topk(20, sum by (project) (pbs_job_requested_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}))",
           "format": "time_series",
           "legendFormat": "{{project}}",
           "range": true,
@@ -3831,7 +3831,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.50, sum by (queue, le) (pbs_queue_job_wait_seconds_bucket{queue=~\"$queue\"}))",
+          "expr": "histogram_quantile(0.50, sum by (queue, le) (pbs_queue_job_wait_seconds_bucket{prom_group_name=~\"$clustername\",queue=~\"$queue\"}))",
           "format": "time_series",
           "legendFormat": "p50 {{queue}}",
           "range": true,
@@ -3843,7 +3843,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (queue, le) (pbs_queue_job_wait_seconds_bucket{queue=~\"$queue\"}))",
+          "expr": "histogram_quantile(0.95, sum by (queue, le) (pbs_queue_job_wait_seconds_bucket{prom_group_name=~\"$clustername\",queue=~\"$queue\"}))",
           "format": "time_series",
           "legendFormat": "p95 {{queue}}",
           "range": true,
@@ -3855,7 +3855,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "pbs_queue_oldest_job_wait_seconds{queue=~\"$queue\"}",
+          "expr": "pbs_queue_oldest_job_wait_seconds{prom_group_name=~\"$clustername\",queue=~\"$queue\"}",
           "format": "time_series",
           "legendFormat": "oldest {{queue}}",
           "range": true,
@@ -3940,7 +3940,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(clamp_min(pbs_queue_job_wait_seconds_count{queue=~\"$queue\"} - ignoring(le) pbs_queue_job_wait_seconds_bucket{queue=~\"$queue\",le=\"86400\"}, 0))",
+          "expr": "sum(clamp_min(pbs_queue_job_wait_seconds_count{prom_group_name=~\"$clustername\",queue=~\"$queue\"} - ignoring(le) pbs_queue_job_wait_seconds_bucket{prom_group_name=~\"$clustername\",queue=~\"$queue\",le=\"86400\"}, 0))",
           "format": "time_series",
           "legendFormat": ">1d",
           "range": true,
@@ -3952,7 +3952,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(clamp_min(pbs_queue_job_wait_seconds_count{queue=~\"$queue\"} - ignoring(le) pbs_queue_job_wait_seconds_bucket{queue=~\"$queue\",le=\"172800\"}, 0))",
+          "expr": "sum(clamp_min(pbs_queue_job_wait_seconds_count{prom_group_name=~\"$clustername\",queue=~\"$queue\"} - ignoring(le) pbs_queue_job_wait_seconds_bucket{prom_group_name=~\"$clustername\",queue=~\"$queue\",le=\"172800\"}, 0))",
           "format": "time_series",
           "legendFormat": ">2d",
           "range": true,
@@ -3964,7 +3964,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(clamp_min(pbs_queue_job_wait_seconds_count{queue=~\"$queue\"} - ignoring(le) pbs_queue_job_wait_seconds_bucket{queue=~\"$queue\",le=\"432000\"}, 0))",
+          "expr": "sum(clamp_min(pbs_queue_job_wait_seconds_count{prom_group_name=~\"$clustername\",queue=~\"$queue\"} - ignoring(le) pbs_queue_job_wait_seconds_bucket{prom_group_name=~\"$clustername\",queue=~\"$queue\",le=\"432000\"}, 0))",
           "format": "time_series",
           "legendFormat": ">5d",
           "range": true,
@@ -4049,7 +4049,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "topk(20, sum by (project) (pbs_job_info{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}))",
+          "expr": "topk(20, sum by (project) (pbs_job_info{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"}))",
           "format": "time_series",
           "legendFormat": "{{project}}",
           "range": true,
@@ -4141,7 +4141,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "topk(25, pbs_job_requested_cpu_cores{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
+          "expr": "topk(25, pbs_job_requested_cpu_cores{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -4221,7 +4221,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "topk(25, pbs_job_requested_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
+          "expr": "topk(25, pbs_job_requested_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -4301,7 +4301,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "topk(25, pbs_job_requested_walltime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
+          "expr": "topk(25, pbs_job_requested_walltime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -4381,7 +4381,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "topk(25, pbs_job_used_cpu_percent{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
+          "expr": "topk(25, pbs_job_used_cpu_percent{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -4461,7 +4461,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "topk(25, pbs_job_used_memory_bytes{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
+          "expr": "topk(25, pbs_job_used_memory_bytes{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -4541,7 +4541,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "topk(25, pbs_job_queue_wait_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
+          "expr": "topk(25, pbs_job_queue_wait_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -4627,7 +4627,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "pbs_exporter_job_inspection_up",
+          "expr": "pbs_exporter_job_inspection_up{prom_group_name=~\"$clustername\"}",
           "format": "time_series",
           "instant": true,
           "legendFormat": "value",
@@ -4704,7 +4704,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "pbs_exporter_job_inspection_errors_total",
+          "expr": "pbs_exporter_job_inspection_errors_total{prom_group_name=~\"$clustername\"}",
           "format": "time_series",
           "instant": true,
           "legendFormat": "value",
@@ -4781,7 +4781,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "time() - pbs_exporter_job_inspection_last_success_timestamp_seconds",
+          "expr": "time() - pbs_exporter_job_inspection_last_success_timestamp_seconds{prom_group_name=~\"$clustername\"}",
           "format": "time_series",
           "instant": true,
           "legendFormat": "value",
@@ -4858,7 +4858,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(pbs_job_info{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
+          "expr": "sum(pbs_job_info{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
           "format": "time_series",
           "instant": true,
           "legendFormat": "value",
@@ -4935,7 +4935,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(pbs_job_used_walltime_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
+          "expr": "count(pbs_job_used_walltime_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
           "format": "time_series",
           "instant": true,
           "legendFormat": "value",
@@ -5012,7 +5012,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(pbs_job_queue_wait_seconds{job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
+          "expr": "count(pbs_job_queue_wait_seconds{prom_group_name=~\"$clustername\",job_owner=~\"$job_owner\",queue=~\"$queue\",project=~\"$project\",job_state=~\"$job_state\"})",
           "format": "time_series",
           "instant": true,
           "legendFormat": "value",
@@ -5121,7 +5121,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "pbs_exporter_job_inspection_up",
+          "expr": "pbs_exporter_job_inspection_up{prom_group_name=~\"$clustername\"}",
           "format": "time_series",
           "legendFormat": "up",
           "range": true,
@@ -5133,7 +5133,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "time() - pbs_exporter_job_inspection_last_success_timestamp_seconds",
+          "expr": "time() - pbs_exporter_job_inspection_last_success_timestamp_seconds{prom_group_name=~\"$clustername\"}",
           "format": "time_series",
           "legendFormat": "last success age",
           "range": true,
@@ -5241,7 +5241,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "increase(pbs_exporter_job_inspection_errors_total[$__rate_interval])",
+          "expr": "increase(pbs_exporter_job_inspection_errors_total{prom_group_name=~\"$clustername\"}[$__rate_interval])",
           "format": "time_series",
           "legendFormat": "errors",
           "range": true,
@@ -5286,14 +5286,39 @@
           "type": "prometheus",
           "uid": "$datasource"
         },
-        "definition": "label_values(pbs_job_info, job_owner)",
+        "definition": "label_values(pbs_exporter_up, prom_group_name)",
+        "includeAll": true,
+        "label": "Cluster name",
+        "multi": true,
+        "name": "clustername",
+        "options": [],
+        "query": {
+          "query": "label_values(pbs_exporter_up, prom_group_name)",
+          "refId": "PrometheusVariableQueryEditor-clustername"
+        },
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(pbs_job_info{prom_group_name=~\"$clustername\"}, job_owner)",
         "includeAll": true,
         "label": "Job owner",
         "multi": true,
         "name": "job_owner",
         "options": [],
         "query": {
-          "query": "label_values(pbs_job_info, job_owner)",
+          "query": "label_values(pbs_job_info{prom_group_name=~\"$clustername\"}, job_owner)",
           "refId": "PrometheusVariableQueryEditor-job_owner"
         },
         "refresh": 1,
@@ -5311,14 +5336,14 @@
           "type": "prometheus",
           "uid": "$datasource"
         },
-        "definition": "label_values(pbs_job_info, queue)",
+        "definition": "label_values(pbs_job_info{prom_group_name=~\"$clustername\"}, queue)",
         "includeAll": true,
         "label": "Queue",
         "multi": true,
         "name": "queue",
         "options": [],
         "query": {
-          "query": "label_values(pbs_job_info, queue)",
+          "query": "label_values(pbs_job_info{prom_group_name=~\"$clustername\"}, queue)",
           "refId": "PrometheusVariableQueryEditor-queue"
         },
         "refresh": 1,
@@ -5336,14 +5361,14 @@
           "type": "prometheus",
           "uid": "$datasource"
         },
-        "definition": "label_values(pbs_job_info, project)",
+        "definition": "label_values(pbs_job_info{prom_group_name=~\"$clustername\"}, project)",
         "includeAll": true,
         "label": "Project",
         "multi": true,
         "name": "project",
         "options": [],
         "query": {
-          "query": "label_values(pbs_job_info, project)",
+          "query": "label_values(pbs_job_info{prom_group_name=~\"$clustername\"}, project)",
           "refId": "PrometheusVariableQueryEditor-project"
         },
         "refresh": 1,
@@ -5361,14 +5386,14 @@
           "type": "prometheus",
           "uid": "$datasource"
         },
-        "definition": "label_values(pbs_job_info, job_state)",
+        "definition": "label_values(pbs_job_info{prom_group_name=~\"$clustername\"}, job_state)",
         "includeAll": true,
         "label": "Job state",
         "multi": true,
         "name": "job_state",
         "options": [],
         "query": {
-          "query": "label_values(pbs_job_info, job_state)",
+          "query": "label_values(pbs_job_info{prom_group_name=~\"$clustername\"}, job_state)",
           "refId": "PrometheusVariableQueryEditor-job_state"
         },
         "refresh": 1,
